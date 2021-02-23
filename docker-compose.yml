@@ -3,26 +3,26 @@ version: "3.9"
 
 services:
   db:
-    image: library/postgres:13
+    image: "library/postgres:13"
     env_file:
-      - .env.dev
+      - ".env.dev"
     # Ports is only open for dev
     ports:
-    - 5432:5432
+    - "5432:5432"
     volumes:
 #      - init.sql:/docker-entrypoint-initdb.d/init.sql
-      - quiz:/var/lib/postgresql/data
+      - "quiz:/var/lib/postgresql/data"
 
   web:
-    build: .
+    build: "./server/"
     env_file:
-      - .env.dev
+      - ".env.dev"
     volumes:
-    - .:/src
+    - "./server:/src"
     ports:
     - "8000:8000"
     depends_on:
-      - db
+      - "db"
 
 volumes:
   quiz:

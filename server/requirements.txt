@@ -1,4 +1,7 @@
 # Todo: Lock in versioning, get dependencies
+
+python-socketio
+
 ##############################################################################
 # Fast API helpers
 Jinja2              # Template engine
