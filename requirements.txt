@@ -1,12 +1,11 @@
 # Todo: Lock in versioning, get dependencies
 
+fastapi
+Jinja2           # Template engine
+aiofiles         # Serves static files (async)
+python-multipart # Allows FastAPI to use forms instead of JSON
+pydantic         # Data validation through Python type annotations
 python-socketio
-
-##############################################################################
-# Fast API helpers
-Jinja2              # Template engine
-aiofiles            # Serves static files (async)
-python-multipart    # Allows FastAPI to use forms instead of JSON
 
 ##############################################################################
 # Database stuff
@@ -18,9 +17,8 @@ psycopg2            # Database driver for Postgres. TODO: Use async version
 
 ##############################################################################
 # Deployment
-fastapi
-uvicorn   # ASGI server implementation
-#gunicorn # server, process manager.
+uvicorn[standard] # ASGI server implementation. The standard adds WebSocket support https://github.com/tiangolo/fastapi/issues/2209#issuecomment-713341164
+#gunicorn         # server, process manager.
 
 ##############################################################################
 # Development Requirements
