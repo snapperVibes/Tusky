@@ -2,9 +2,7 @@
 # Validate validates at the Model level
 # fmt: off  | It's on you to maintain formatting (Todo: snapfmt)
 import enum
-import time
-from functools import cache
-from typing import Optional
+
 
 from sqlalchemy import (
     BLOB,
@@ -24,6 +22,7 @@ from sqlalchemy.sql import functions
 from sqlalchemy.orm import validates
 
 from .db import Base
+from .types import Role
 
 
 ########################################################################################
@@ -42,15 +41,23 @@ def min_size(column: str, minimum) -> str:
 
 def ID():         return C(INT, IDENTITY(), primary_key=True)
 def TS():         return C(DATETIME, default=functions.now)
-def QuestionFK(): return C(INT, FK("question.id"), nullable=False)
-def AnswerFK():   return C(INT, FK("answer.id"), nullable=False)
-def ImageFK():    return C(INT, FK("image.id"), nullable=False)
+def QseFK():      return C(INT, FK("quiz_session_event.id"), nullable=False)
+def QuizFK():     return C(INT, FK("quizzes.id"), nullable=False)
+def QuestionFK(): return C(INT, FK("questions.id"), nullable=False)
+def AnswerFK():   return C(INT, FK("answers.id"), nullable=False)
+def ImageFK():    return C(INT, FK("images.id"), nullable=False)
 
 
-# fmt: on
 ########################################################################################
 # Models
+# The database is normalized to a reasonable level.
 # Todo: Choose naming schema
+class SiteRole(enum.Enum):
+    SUPER_ADMIN = Role("Super Admin", "🦸")
+    ADMIN       = Role("Admin", "👑")
+    PLEBEIAN    = Role("User", "🙂")
+
+
 class Users(Base):
     # User names must be between 1 and 32 characters long
     id          = ID()
@@ -58,6 +65,7 @@ class Users(Base):
     name        = C(VARCHAR(32), CheckConstraint(min_size("name", 1), nullable=False))
     salt        = C(TEXT, nullable=False)
     password    = C(TEXT, nullable=False)
+    site_role   = C(SiteRole, nullable=False)
 
     UniqueConstraint("name", "number")
 
@@ -90,16 +98,9 @@ class LinkUsersAndEmailAddresses(Base):
     visibility   = C()  # Todo: Email visibility
 
 
-class Roles(Base):
-    id          = ID()
-    creation_ts = TS()
-    name        = C(TEXT, nullable=False, unique=True)
-    description = C(TEXT)
-
-
 class Rooms(Base):
     # Todo: Consider using Redis for storing ephemeral details of rooms
-    id = ID()
+    id          = ID()
     creation_ts = TS()
     # Todo: Verify code unique among currently valid rooms
     #  Make a function like
@@ -110,18 +111,25 @@ class Rooms(Base):
     #        return True
     #    return False
     #  and use it to validate that code is unique
-    code  = C(TEXT)
-    valid = C(BOOL)
+    code      = C(TEXT)
+    valid     = C(BOOL)
 
 
-class UserEvent(Base):
-    user        = C(INT)
-    creation_ts = TS()
+class RoomRole(enum.Enum):
+    TEACHER = Role("Teacher", "🧑‍🏫")    # Zero-width join
+    STUDENT = Role("Student", "🧑‍🎓")    # Zero-width join
 
 
 class Quizzes(Base):
     id          = ID()
     creation_ts = TS()
+
+
+class Question(Base):
+    id          = ID()
+    creation_ts = TS()
+    quiz_id     = QuizFK()
+    image       = ImageFK()
 
 
 class AnswerType(enum.Enum):
@@ -133,26 +141,20 @@ class AnswerType(enum.Enum):
     # Todo: Sub categorize into two types: SHORT RESPONSE and ESSAY, where short response has selected answers and essay is on the teacher to grade.
 
 
-class Question(Base):
-    id          = ID()
-    creation_ts = TS()
-    type        = C(QuestionType, nullable=False)
-    quiz_id     = C(INT, FK("quizzes.id"))
-    image       = C(INT, FK("images.id"))
-
-
 class Answer(Base):
-    id = ID()
+    id              = ID()
     creation_ts     = TS()
     question_id     = QuestionFK()
+    type            = C(AnswerType, nullable=False)
+    details         = FK
     identifier      = C(TEXT)
     # Todo: Add validation that ensures two answers on the same question can't have the same order
     # Todo: Ensure order starts at 1 and every gap is filled
     order           = C(INT, nullable=False)
-    image           = C(INT, FK("images.id"))
+    image           = ImageFK()
     correct         = C(BOOL, nullable=False)
-    positive_points = C(NUMERIC, default=1)
-    negative_points = C(NUMERIC, default=0)
+    positive_points = C(NUMERIC, default=1, nullable=False)
+    negative_points = C(NUMERIC, default=0, nullable=False)
 
 
 class UploadedImages(Base):
@@ -161,9 +163,6 @@ class UploadedImages(Base):
     data        = C(BLOB, nullable=False)
     description = C(TEXT)
 
-
-class LinkUsersAndQuizes(Base):
-    pass
 
 
 # class RoleScope(enum.Enum):
@@ -181,7 +180,7 @@ class QuizSession(Base):
     """"""
     id          = ID()
     creation_ts = TS()
-    quiz_id     = C(INT, FK("quizzes.id"), nullable=False)
+    quiz_id     = QuizFK()
     room_id     = C(INT, FK("rooms.id"))
 
 
@@ -203,6 +202,9 @@ class QuizSessionEvent(Base):
     #   UserRole: SuperAdmin, Admin, Plebeian PLEBEIAN
     #   EntityType: Quiz, Question, Answer
     #   Action: Started, Finished, Added, Modified (Requires old and new), Selected, locked-in Removed,
+    id                    = ID()
+    creation_ts           = TS()
+    user_id               = C(INT, FK("users.id"), nullable=False)
 
 
 class QuizSessionEventType(enum.Enum):
@@ -210,97 +212,112 @@ class QuizSessionEventType(enum.Enum):
     # Adding questions mid quiz seems like a good way for things to fall apart
     # Todo: Define order taxonomy for copy-editors.
     #  (Coders shouldn't have to worry about it.)
-    #       SuperAdmin, Admin, Plebeian PLEBEIAN
+    #       Teacher, Student
     #       Quiz, Question, Answer
     #       Started, Finished, Added, Modified (Requires old and new), Selected, locked-in Removed,
-    ADMIN_QUIZ_STARTED         = "Quiz started"
-    ADMIN_QUIZ_FINISHED        = "Quiz finished"
-    ADMIN_QUESTION_STARTED     = "Question started"
-    ADMIN_QUESTION_FINISHED    = "Question finished"
-    ADMIN_QUESTION_MODIFIED    = "Question modified"
-    ADMIN_QUESTION_REMOVED     = "Question removed"
-    ADMIN_ANSWER_ADDED         = "Answer added"
-    ADMIN_ANSWER_MODIFIED      = "Answer modified"
-    ADMIN_ANSWER_REMOVED       = "Answer removed"
-    PLEBEIAN_QUIZ_STARTED      = "Quiz started"
-    PLEBEIAN_QUIZ_FINISHED     = "Quiz finished"
-    PLEBEIAN_QUESTION_STARTED  = "Question started"
-    PLEBEIAN_QUESTION_Finished = "Question finished"
-    PLEBEIAN_ANSWER_SELECTED   = "Answer selected"
-    PLEBEIAN_ANSWER_LOCKED_IN  = "Answer locked in"
+    TEACHER_QUIZ_STARTED      = "Quiz started"
+    TEACHER_QUIZ_FINISHED     = "Quiz finished"
+    TEACHER_QUESTION_STARTED  = "Question started"
+    TEACHER_QUESTION_FINISHED = "Question finished"
+    TEACHER_QUESTION_MODIFIED = "Question modified"
+    TEACHER_QUESTION_REMOVED  = "Question removed"
+    TEACHER_ANSWER_ADDED      = "Answer added"
+    TEACHER_ANSWER_MODIFIED   = "Answer modified"
+    TEACHER_ANSWER_REMOVED    = "Answer removed"
+    STUDENT_QUIZ_STARTED      = "Quiz started"
+    STUDENT_QUIZ_FINISHED     = "Quiz finished"
+    STUDENT_QUESTION_STARTED  = "Question started"
+    STUDENT_QUESTION_Finished = "Question finished"
+    STUDENT_ANSWER_SELECTED   = "Answer selected"
+    STUDENT_ANSWER_LOCKED_IN  = "Answer locked in"
 
 
-class _QuizSessionEventType:
-    """ Common attributes for every quiz_session_event table"""
-    id                    = ID()
-    creation_ts           = TS()
-    quiz_session_event_id = C(INT, FK("quiz_session_event.id"), nullable=False)
-    user_id               = C(INT, FK("users.id"), nullable=False)
+class _qse:
+    """ Quiz Session Event __tablename__ mixin to reduce typing during development """
+    @property
+    def __tablename__(self):
+        _, entity_type, action = self.__class__.__name__.split("_")
+        # Split action on capital letters
+        action = "".join("_" + x.lower() if x.isupper() else x for x in action)
+        return f"quiz_session_event_{entity_type}_{action}"
 
 
-class QSE_Admin_QuizStarted(Base, _QuizSessionEventType):
-    """"""
+class QSE_Teacher_QuizStarted(Base, _qse):
+    quiz_session_event_id = QseFK()
 
 
-class QSE_Admin_QuizFinished(Base, _QuizSessionEventType):
-    """"""
+
+class QSE_Teacher_QuizFinished(Base, _qse):
+    quiz_session_event_id = QseFK()
 
 
-class QSE_Admin_QuestionStarted(Base, _QuizSessionEventType):
+
+class QSE_Teacher_QuestionStarted(Base, _qse):
+    quiz_session_event_id = QseFK()
     # Todo: Validation that you can't start the same question twice before finishing it
-    question_id = QuestionFK()
+    question_id           = QuestionFK()
 
 
-class QSE_Admin_QuestionFinished(Base, _QuizSessionEventType):
-    question_id = QuestionFK()
+class QSE_Teacher_QuestionFinished(Base, _qse):
+    quiz_session_event_id = QseFK()
+    question_id           = QuestionFK()
 
 
-class QSE_Admin_QuestionModified(Base, _QuizSessionEventType):
-    old_question = QuestionFK()
-    new_question = QuestionFK()
+class QSE_Teacher_QuestionModified(Base, _qse):
+    quiz_session_event_id = QseFK()
+    old_question          = QuestionFK()
+    new_question          = QuestionFK()
 
 
-class QSE_Admin_QuestionRemoved(Base, _QuizSessionEventType):
-    question_id = QuestionFK()
+class QSE_Teacher_QuestionRemoved(Base, _qse):
+    quiz_session_event_id = QseFK()
+    question_id           = QuestionFK()
 
 
-class QSE_Admin_AnswerAdded(Base, _QuizSessionEventType):
-    new_answer = AnswerFK()
+class QSE_Teacher_AnswerAdded(Base, _qse):
+    quiz_session_event_id = QseFK()
+    new_answer            = AnswerFK()
 
 
-class QSE_Admin_AnswerModified(Base, _QuizSessionEventType):
-    old_answer = AnswerFK()
-    new_answer = AnswerFK()
+class QSE_Teacher_AnswerModified(Base, _qse):
+    quiz_session_event_id = QseFK()
+    old_answer            = AnswerFK()
+    new_answer            = AnswerFK()
 
 
-class QSE_Admin_AnswerRemoved(Base, _QuizSessionEventType):
-    answer_id = AnswerFK()
+class QSE_Teacher_AnswerRemoved(Base, _qse):
+    quiz_session_event_id = QseFK()
+    answer_id             = AnswerFK()
 
 
-class QSE_Plebeian_QuizStarted(Base, _QuizSessionEventType):
-    """"""
+class QSE_Student_QuizStarted(Base, _qse):
+    quiz_session_event_id = QseFK()
 
 
-class QSE_Plebeian_QuizFinished(Base, _QuizSessionEventType):
-    """"""
+class QSE_Student_QuizFinished(Base, _qse):
+    quiz_session_event_id = QseFK()
 
 
-class QSE_Plebian_QuestionStarted(Base, _QuizSessionEventType):
-    question_id = QuestionFK()
+class QSE_StudentQuestionStarted(Base, _qse):
+    quiz_session_event_id = QseFK()
+    question_id           = QuestionFK()
 
 
-class QSE_Plebian_QuestionFinished(Base, _QuizSessionEventType):
-    question_id = QuestionFK()
+class QSE_StudentQuestionFinished(Base, _qse):
+    quiz_session_event_id = QseFK()
+    question_id           = QuestionFK()
 
 
-class QSE_Plebiean_AnswerSelected(Base, _QuizSessionEventType):
+class QSE_Student_AnswerSelected(Base, _qse):
+    quiz_session_event_id = QseFK()
     # Todo: Implement human waiting period:
     #  Perhaps don't add event if more than 3 selections happen in less than .2 seconds?
-    answer_id = AnswerFK()
+    answer_id             = AnswerFK()
 
 
-class QSE_Plebiean_AnswerLockedIn(Base, _QuizSessionEventType):
-    answer_id = AnswerFK()
+class QSE_Student_AnswerLockedIn(Base, _qse):
+    quiz_session_event_id = QseFK()
+    answer_id             = AnswerFK()
 
 
 # fmt: on

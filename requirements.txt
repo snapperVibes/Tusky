@@ -23,4 +23,4 @@ uvicorn[standard] # ASGI server implementation. The standard adds WebSocket supp
 ##############################################################################
 # Development Requirements
 pytest
-black
+
