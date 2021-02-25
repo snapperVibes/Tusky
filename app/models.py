@@ -42,6 +42,7 @@ def min_size(column: str, minimum) -> str:
 
 def ID():         return C(INT, IDENTITY(), primary_key=True)
 def TS():         return C(DATETIME, default=functions.now)
+def UserFK():     return C(INT, FK("users.id"), nullable=False)
 def QseFK():      return C(INT, FK("quiz_session_event.id"), nullable=False)
 def QuizFK():     return C(INT, FK("quizzes.id"), nullable=False)
 def QuestionFK(): return C(INT, FK("questions.id"), nullable=False)
@@ -94,15 +95,16 @@ class EmailAddresses(Base):
 
 class LinkUsersAndEmailAddresses(Base):
     __tablename__ = "link_users_emailaddresses"
-    user         = C(INT, FK("users.id"), primary_key=True)
+    user         = UserFK()
     emailaddress = C(INT, FK("emailaddresses.id"), primary_key=True)
     visibility   = C()  # Todo: Email visibility
+    PrimaryKeyConstraint("user")
 
 
 class Images(Base):
     id          = ID()
     creation_ts = TS()
-    uploaded_by = C(INT, FK("users.id"), nullable=False)
+    uploaded_by = UserFK()
     filename    = C(TEXT, nullable=False)
     public_code = C(TEXT, nullable=False)  # Todo: Discuss optimal public facing name
     data        = C(BLOB, nullable=False)
@@ -138,8 +140,6 @@ class RoomEvent(Base):
     creation_ts = TS()
 
 
-########################################################################################
-# Quizzes (& Children & Sessions)
 class Quizzes(Base):
     id          = ID()
     creation_ts = TS()
@@ -241,10 +241,10 @@ class QuizSessionEvent(Base):
     #   Action: Started, Finished, Added, Modified (Requires old and new), Selected, locked-in Removed,
     # We purposefully do not give Admins the ability to add questions mid quiz
     # Adding questions mid quiz seems like a good way for things to fall apart
-    id                    = ID()
-    creation_ts           = TS()
-    user_id               = C(INT, FK("users.id"), nullable=False)
-
+    id              = ID()
+    creation_ts     = TS()
+    quiz_session_id = C(INT, FK("quiz_session.id"), nullable=False)
+    user_id         = UserFK()
 
 class _qse:
     """ Quiz Session Event __tablename__ mixin to reduce typing during development """
