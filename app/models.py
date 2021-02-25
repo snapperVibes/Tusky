@@ -13,10 +13,11 @@ from sqlalchemy import (
     ForeignKey as FK,
     Identity as IDENTITY,
     INT,
+    NUMERIC,
     TEXT,
     VARCHAR,
+    PrimaryKeyConstraint,
     UniqueConstraint,
-    NUMERIC,
 )
 from sqlalchemy.sql import functions
 from sqlalchemy.orm import validates
@@ -98,9 +99,21 @@ class LinkUsersAndEmailAddresses(Base):
     visibility   = C()  # Todo: Email visibility
 
 
+class Images(Base):
+    id          = ID()
+    creation_ts = TS()
+    uploaded_by = C(INT, FK("users.id"), nullable=False)
+    filename    = C(TEXT, nullable=False)
+    public_code = C(TEXT, nullable=False)  # Todo: Discuss optimal public facing name
+    data        = C(BLOB, nullable=False)
+    description = C(TEXT)
+
+
+########################################################################################
+# Rooms (& Events)
 class Rooms(Base):
     # Todo: Consider using Redis for storing ephemeral details of rooms
-    id          = ID()
+    id = ID()
     creation_ts = TS()
     # Todo: Verify code unique among currently valid rooms
     #  Make a function like
@@ -111,15 +124,22 @@ class Rooms(Base):
     #        return True
     #    return False
     #  and use it to validate that code is unique
-    code      = C(TEXT)
-    valid     = C(BOOL)
+    code = C(TEXT)
+    valid = C(BOOL)
 
 
 class RoomRole(enum.Enum):
-    TEACHER = Role("Teacher", "🧑‍🏫")    # Zero-width join
-    STUDENT = Role("Student", "🧑‍🎓")    # Zero-width join
+    TEACHER = Role("Teacher", "🧑‍🏫")  # Zero-width join
+    STUDENT = Role("Student", "🧑‍🎓")  # Zero-width join
 
 
+class RoomEvent(Base):
+    id = ID()
+    creation_ts = TS()
+
+
+########################################################################################
+# Quizzes (& Children & Sessions)
 class Quizzes(Base):
     id          = ID()
     creation_ts = TS()
@@ -132,52 +152,69 @@ class Question(Base):
     image       = ImageFK()
 
 
-class AnswerType(enum.Enum):
-    RADIO     = "Radio"  # Only one answer of type Radio can be correct per question
-    SELECTION = "Selection"  # 0 or more answers of type selection can be selected
-    ORDER     = "Order"  # Draggable answer whose correctness is decided by its position
-    #  relative to the other answers
-    RESPONSE  = "Response"  # User response.
-    # Todo: Sub categorize into two types: SHORT RESPONSE and ESSAY, where short response has selected answers and essay is on the teacher to grade.
-
-
 class Answer(Base):
+    """
+    Types of Answers:
+        Radio: Only one answer of type Radio can be correct per question
+        Selection: 0 or more answers of type selection can be selected
+        Order: Draggable answer whose correctness is decided by its position
+        ShortAnswer: Student's write in answers compared to a selection of correct answers
+        Essay: Teacher manually grades written responses """
     id              = ID()
     creation_ts     = TS()
     question_id     = QuestionFK()
-    type            = C(AnswerType, nullable=False)
-    details         = FK
     identifier      = C(TEXT)
     # Todo: Add validation that ensures two answers on the same question can't have the same order
     # Todo: Ensure order starts at 1 and every gap is filled
     order           = C(INT, nullable=False)
     image           = ImageFK()
-    correct         = C(BOOL, nullable=False)
-    positive_points = C(NUMERIC, default=1, nullable=False)
-    negative_points = C(NUMERIC, default=0, nullable=False)
 
 
-class UploadedImages(Base):
-    id          = ID()
-    creation_ts = TS()
-    data        = C(BLOB, nullable=False)
-    description = C(TEXT)
+class RadioAnswer(Base):
+    __tablename__ = "answer_type_radio"
+    answer_id = AnswerFK()
+    correct = C(BOOL, nullable=False)
+    value = C(NUMERIC, default=1)   # Todo: default = lambda (self): 1 if correct else 0
+    PrimaryKeyConstraint("answer_id")
 
 
+class SelectionAnswer(Base):
+    __tablename__ = "answer_type_selection"
+    answer_id = AnswerFK()
+    correct = C(BOOL, nullable=False)
+    value = C(NUMERIC, default=1)
+    PrimaryKeyConstraint("answer_id")
 
-# class RoleScope(enum.Enum):
-#     Global = 1
-#     Room = 2
-#
-#
-# class LinkUsersAndRoles(Base):
-#     __tablename__ = "link_users_userroles"
-#     user = C(INT, FK("users.id"), primary_key=True)
-########################################################################################
-# Quiz Session and related tables
-# Todo: NAMING
+
+class OrderAnswer(Base):
+    __tablename__ = "answer_type_order"
+    answer_id = AnswerFK()
+    correct_position = C(INT, nullable=False)
+    value = C(NUMERIC, default=1)   # Todo: default = lambda (self): 1 if correct else 0
+    PrimaryKeyConstraint("answer_id")
+
+
+class ShortAnswer(Base):
+    __tablename__ = "answer_type_short"
+    answer_id = AnswerFK()
+    PrimaryKeyConstraint("answer_id")
+
+
+class CorrectShortAnswers(Base):
+    __tablename__ = "answer_type_short_answers"
+    answer_id = AnswerFK()
+    correct = C(TEXT, nullable=False)
+    value = C(NUMERIC, default=1)
+    PrimaryKeyConstraint("answer_id", "correct")
+
+
+class EssayAnswer(Base):
+    __tablename__ = "answer_type_essay"
+    answer_id = AnswerFK()
+    PrimaryKeyConstraint("answer_id")
+
+
 class QuizSession(Base):
-    """"""
     id          = ID()
     creation_ts = TS()
     quiz_id     = QuizFK()
@@ -202,34 +239,11 @@ class QuizSessionEvent(Base):
     #   UserRole: SuperAdmin, Admin, Plebeian PLEBEIAN
     #   EntityType: Quiz, Question, Answer
     #   Action: Started, Finished, Added, Modified (Requires old and new), Selected, locked-in Removed,
+    # We purposefully do not give Admins the ability to add questions mid quiz
+    # Adding questions mid quiz seems like a good way for things to fall apart
     id                    = ID()
     creation_ts           = TS()
     user_id               = C(INT, FK("users.id"), nullable=False)
-
-
-class QuizSessionEventType(enum.Enum):
-    # We purposefully do not give Admins the ability to add questions mid quiz
-    # Adding questions mid quiz seems like a good way for things to fall apart
-    # Todo: Define order taxonomy for copy-editors.
-    #  (Coders shouldn't have to worry about it.)
-    #       Teacher, Student
-    #       Quiz, Question, Answer
-    #       Started, Finished, Added, Modified (Requires old and new), Selected, locked-in Removed,
-    TEACHER_QUIZ_STARTED      = "Quiz started"
-    TEACHER_QUIZ_FINISHED     = "Quiz finished"
-    TEACHER_QUESTION_STARTED  = "Question started"
-    TEACHER_QUESTION_FINISHED = "Question finished"
-    TEACHER_QUESTION_MODIFIED = "Question modified"
-    TEACHER_QUESTION_REMOVED  = "Question removed"
-    TEACHER_ANSWER_ADDED      = "Answer added"
-    TEACHER_ANSWER_MODIFIED   = "Answer modified"
-    TEACHER_ANSWER_REMOVED    = "Answer removed"
-    STUDENT_QUIZ_STARTED      = "Quiz started"
-    STUDENT_QUIZ_FINISHED     = "Quiz finished"
-    STUDENT_QUESTION_STARTED  = "Question started"
-    STUDENT_QUESTION_Finished = "Question finished"
-    STUDENT_ANSWER_SELECTED   = "Answer selected"
-    STUDENT_ANSWER_LOCKED_IN  = "Answer locked in"
 
 
 class _qse:
@@ -246,10 +260,8 @@ class QSE_Teacher_QuizStarted(Base, _qse):
     quiz_session_event_id = QseFK()
 
 
-
 class QSE_Teacher_QuizFinished(Base, _qse):
     quiz_session_event_id = QseFK()
-
 
 
 class QSE_Teacher_QuestionStarted(Base, _qse):
