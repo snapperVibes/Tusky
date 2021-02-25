@@ -111,8 +111,7 @@ class Images(Base):
     description = C(TEXT)
 
 
-########################################################################################
-# Rooms (& Events)
+#######################################################################################
 class Rooms(Base):
     # Todo: Consider using Redis for storing ephemeral details of rooms
     id = ID()
@@ -136,10 +135,25 @@ class RoomRole(enum.Enum):
 
 
 class RoomEvent(Base):
+    """
+    Room Events:
+        Teacher:Room:{}
+        Teacher:QuizSession:{Start, Finish}
+        Student:QuizSession:{Join, Leave}
+        Either:Room:{Join, Leave, Invite, message
+
+    """
+    # Temp comment to help keep work in one place:
+    #   UserRole: SuperAdmin, Admin, Plebeian PLEBEIAN
+    #   EntityType: Room, QuizSession, Quiz, Question, Answer
+    #   Action: Started, Finished, Join, Leave, Added, Modified (Requires old and new), Selected, locked-in Removed,
+
     id = ID()
     creation_ts = TS()
+    room_id = C(INT, FK("rooms.id"), nullable=False)
 
 
+#######################################################################################
 class Quizzes(Base):
     id          = ID()
     creation_ts = TS()
@@ -236,7 +250,7 @@ class QuizSessionEvent(Base):
         Plebeian:Answer:{{select | lock-in}}
     """
     # Order taxonomy for copy-editors (Coders shouldn't have to worry about it.)
-    #   UserRole: SuperAdmin, Admin, Plebeian PLEBEIAN
+    #   UserRole: SuperAdmin, Admin, Plebeian
     #   EntityType: Quiz, Question, Answer
     #   Action: Started, Finished, Added, Modified (Requires old and new), Selected, locked-in Removed,
     # We purposefully do not give Admins the ability to add questions mid quiz
