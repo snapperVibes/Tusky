@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 
-from app import views
+from app import routes
 
 app = FastAPI()
 
@@ -18,7 +18,8 @@ async def shutdown():
     print("Shutting down")
 
 
-app.include_router(views.router)
+app.include_router(routes.router)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
 if __name__ == "__main__":

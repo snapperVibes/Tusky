@@ -1,19 +1,73 @@
-{% extends '_base.html' %}
+{% extends '_header.html' %}
 {% block main %}
+<div class="content">
+    <div class="chooseRoom">
+        <header class="tusky-navbar">
+        </header>
+        <nav class="tusky-menu-container">
+        </nav>
 
-    <body>
-        <h1>WebSocket Chat</h1>
-        <form action="" onsubmit="sendMessage(event)">
-            <label>Item ID: <input type="text" id="itemId" autocomplete="off" value="foo"/></label>
-            <label>Token: <input type="text" id="token" autocomplete="off" value="some-key-token"/></label>
-            <button onclick="connect(event)">Connect</button>
-            <hr>
-            <label>Message: <input type="text" id="messageText" autocomplete="off"/></label>
-            <button>Send</button>
+        <div id="tuskyFormContainerJoin" role="main">
+            <!-- THE FORM                               -->
+            <form id="tusky_form_join" action="" onsubmit="joinRoom(event)">
+                <fieldset class="signin-fieldset">
+                    <h2>JOIN ROOM</h2>
+                    <div class="form-group RoomCode">
+                        <label for="roomCode" class="text-signin">
+                            ROOM CODE
+                        </label>
+                        <input name="roomcode" id="roomCode" class="form-control tusky-input" type="text" tabindex="0" placeholder="ENTER 5-LETTER CODE" style="text-transform:uppercase;" maxlength="5" autocorrect="off" autocomplete="off" autocapitalize="off">
+                    </div>
+                    <div class="form-group Name">
+                        <label for="username" class="text-signin">
+                            NAME
+<!--                        <span class="name-char-remaining pull-right"></span>-->
+                        </label>
+                    <input name="name" id="username" class="form-control tusky-input" type="text" placeholder="ENTER YOUR NAME" style="text-transform:uppercase;" maxlength="16" value="" autocapitalize="off" autocorrect="off" autocomplete="off">
+                    </div>
+                    <button id="button-play" class="button-signin">
+                        <div class="play-text">
+                            PLAY
+                        </div>
+                    </button>
+
+                </fieldset>
+            </form>
+        </div>
+
+
+
+    <br>
+    <span>OR</span>
+    <br>
+    <br>
+
+    <div id="tuskyFormContainerCreate" role="main">
+        <!-- THE FORM                               -->
+        <form id="tusky_form_create" action="" onsubmit="createRoom(event)">
+            <fieldset class="signin-fieldset">
+                <h2>CREATE ROOM</h2>
+                <button id="button-create" class="button-create-room">
+                    <div class="play-text">
+                        CREATE ROOM
+                    </div>
+                </button>
+
+            </fieldset>
         </form>
-        <ul id='messages'>
-        </ul>
-        <script type="text/javascript" src="{{ url_for('static', path='js/websocket.js') }}">
-        </script>
-    </body>
+    </div>
+
+    </div>
+    <div id="tos-warning">
+        By clicking into a room, you agree to our
+        <a href="">Terms of Service</a>
+    </div>
+
+    <div class="tusky_notice">
+        <span id="notice">
+        </span>
+    </div>
+    <script src="{{ url_for('static', path='scripts/select_room.js') }}"></script>
+
+</div>
 {% endblock %}

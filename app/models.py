@@ -2,7 +2,8 @@
 # Validate validates at the Model level
 # fmt: off  | It's on you to maintain formatting (Todo: snapfmt)
 import enum
-
+from dataclasses import dataclass
+from typing import List
 
 from sqlalchemy import (
     BLOB,
