@@ -1,27 +1,36 @@
-# Todo: Lock in versioning, get dependencies
-
-fastapi
-Jinja2           # Template engine
-aiofiles         # Serves static files (async)
-python-multipart # Allows FastAPI to use forms instead of JSON
-pydantic         # Data validation through Python type annotations
-python-socketio
-
-##############################################################################
-# Database stuff
-# SQLALchemy 1.4 is a transition release before 2.0.
-# Using 1.4 (and adhering to deprecation warnings) ensures a smooth transition to 2.0
-SQLAlchemy==1.4.0b3 # ORM (Object Relational Mapper)
-alembic             # Database migration tool
-psycopg2            # Database driver for Postgres. TODO: Use async version
-click               # Command-Line Interface Creation Kit
-
-##############################################################################
-# Deployment
-uvicorn[standard] # ASGI server implementation. The standard adds WebSocket support https://github.com/tiangolo/fastapi/issues/2209#issuecomment-713341164
-#gunicorn         # server, process manager.
-
-##############################################################################
-# Development Requirements
-pytest
-
+aiofiles==0.6.0
+alembic==1.5.5
+attrs==20.3.0
+bidict==0.21.2
+click==7.1.2
+fastapi==0.63.0
+greenlet==1.0.0
+h11==0.12.0
+httptools==0.1.1
+iniconfig==1.1.1
+Jinja2==2.11.3
+Mako==1.1.4
+MarkupSafe==1.1.1
+packaging==20.9
+pluggy==0.13.1
+psycopg2==2.8.6
+py==1.10.0
+pydantic==1.8
+pyparsing==2.4.7
+pytest==6.2.2
+python-dateutil==2.8.1
+python-dotenv==0.15.0
+python-editor==1.0.4
+python-engineio==4.0.0
+python-multipart==0.0.5
+python-socketio==5.0.4
+PyYAML==5.4.1
+six==1.15.0
+SQLAlchemy==1.4.0b3
+starlette==0.13.6
+toml==0.10.2
+typing-extensions==3.7.4.3
+uvicorn==0.13.4
+uvloop==0.15.2
+watchgod==0.7
+websockets==8.1
