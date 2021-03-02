@@ -1,25 +1,32 @@
 import enum
 import os
 
-from sqlalchemy import (
-    LargeBinary as BLOB,
-    BOOLEAN as BOOL,
-    CheckConstraint,
+from sqlalchemy.sql import functions
+from sqlalchemy.future import create_engine
+from sqlalchemy.orm import declarative_base, declared_attr, sessionmaker, validates
+from sqlalchemy.sql.expression import (
+    delete as DELETE,
+    select as SELECT,
+    update as UPDATE,
+)
+from sqlalchemy.sql.schema import (
     Column as C,
-    DateTime as DATETIME,
-    Enum as ENUM,
+    CheckConstraint,
     ForeignKey as FK,
     Identity as IDENTITY,
+    PrimaryKeyConstraint,
+    UniqueConstraint,
+)
+from sqlalchemy.sql.sqltypes import (
+    LargeBinary as BLOB,
+    BOOLEAN as BOOL,
+    DateTime as DATETIME,
+    Enum as ENUM,
     INT,
     NUMERIC,
     TEXT,
     VARCHAR,
-    PrimaryKeyConstraint,
-    UniqueConstraint,
 )
-from sqlalchemy.future import create_engine
-from sqlalchemy.sql import functions
-from sqlalchemy.orm import declarative_base, declared_attr, sessionmaker, validates
 
 from .types import Role
 
@@ -129,7 +136,6 @@ class Image(Base):
     description = C(TEXT)
 
 
-#######################################################################################
 class Room(Base):
     __tablename__ = "rooms"
     # Todo: Consider using Redis for storing ephemeral details of rooms
@@ -172,7 +178,6 @@ class RoomEvent(Base):
     room_id = C(INT, FK("rooms.id"), nullable=False)
 
 
-#######################################################################################
 class Quiz(Base):
     __tablename__ = "quizzes"
     id = ID()
@@ -372,3 +377,6 @@ class QSE_Student_AnswerLockedIn(Base, _qse):
 
 
 # fmt: on
+########################################################################################
+# Functions
+
