@@ -1,4 +1,15 @@
 from .db import Base, engine
 from .routes import router
 
-__all__ = ["Base", "engine", "router"]
+
+def create_all(**kw):
+    """ Create all tables """
+    return Base.metadata.create_all(engine, **kw)
+
+
+def drop_all(**kw):
+    """ Drop all tables """
+    return Base.metadata.create_all(engine, **kw)
+
+
+__all__ = ["create_all", "drop_all", "router"]
