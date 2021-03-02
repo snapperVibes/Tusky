@@ -11,6 +11,7 @@ from sqlalchemy import (
     CheckConstraint,
     Column as C,
     DATETIME,
+    Enum as ENUM,
     ForeignKey as FK,
     Identity as IDENTITY,
     INT,
@@ -21,7 +22,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.sql import functions
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, declared_attr
 
 from .db import Base
 from .types import Role
@@ -32,23 +33,22 @@ from .types import Role
 # Todo: I'm fairly certain functions.char_length can be used somehow
 #  instead of this wrapper. Figure it out
 #  This whole function smells.
-def min_size(column: str, minimum) -> str:
+def MIN_SIZE(column: str, minimum) -> str:
     # CHAR_LENGTH is a built-in postgres string function
     # https://www.postgresql.org/docs/13/functions-string.html#FUNCTIONS-STRING-OTHER
-    return f"CHAR_LENGTH({column} >= {minimum};)"
+    return f"SELECT CHAR_LENGTH({column} >= {minimum};)"
 
 
 ########################################################################################
 # Factory functions for common columns to ease typing and reading of repeated text
-
-def ID():         return C(INT, IDENTITY(), primary_key=True)
-def TS():         return C(DATETIME, default=functions.now)
-def UserFK():     return C(INT, FK("users.id"), nullable=False)
-def QseFK():      return C(INT, FK("quiz_session_event.id"), nullable=False)
-def QuizFK():     return C(INT, FK("quizzes.id"), nullable=False)
-def QuestionFK(): return C(INT, FK("questions.id"), nullable=False)
-def AnswerFK():   return C(INT, FK("answers.id"), nullable=False)
-def ImageFK():    return C(INT, FK("images.id"), nullable=False)
+def ID(**kw):         return C(INT, IDENTITY(), primary_key=True, **kw)
+def TS(**kw):         return C(DATETIME, server_default=functions.now(), **kw)
+def UserFK(**kw):     return C(INT, FK("users.id"), nullable=False, **kw)
+def QseFK(**kw):      return C(INT, FK("quiz_session_events.id"), nullable=False, **kw)
+def QuizFK(**kw):     return C(INT, FK("quizzes.id"), nullable=False, **kw)
+def QuestionFK(**kw): return C(INT, FK("questions.id"), nullable=False, **kw)
+def AnswerFK(**kw):   return C(INT, FK("answers.id"), nullable=False, **kw)
+def ImageFK(**kw):    return C(INT, FK("images.id"), nullable=False, **kw)
 
 
 ########################################################################################
@@ -61,14 +61,15 @@ class SiteRole(enum.Enum):
     PLEBEIAN    = Role("User", "🙂")
 
 
-class Users(Base):
+class User(Base):
+    __tablename__ = "users"
     # User names must be between 1 and 32 characters long
-    id          = ID()
-    creation_ts = TS()
-    name        = C(VARCHAR(32), CheckConstraint(min_size("name", 1), nullable=False))
-    salt        = C(TEXT, nullable=False)
-    password    = C(TEXT, nullable=False)
-    site_role   = C(SiteRole, nullable=False)
+    id        = ID()
+    ts        = TS()
+    name      = C(VARCHAR(32), CheckConstraint(MIN_SIZE("name", 1)), nullable=False)
+    salt      = C(TEXT, nullable=False)
+    password  = C(TEXT, nullable=False)
+    site_role = C(ENUM(SiteRole), nullable=False)
 
     UniqueConstraint("name", "number")
 
@@ -79,32 +80,32 @@ class Users(Base):
         raise ValueError("User name must be between 1 and 32 characters.")
 
 
-class EmailAddresses(Base):
+class EmailAddress(Base):
+    __tablename__ = "email_addresses"
     # Application Techniques for Checking and Transformation of Names:
     #   https://tools.ietf.org/html/rfc3696
-    __tablename__ = "emailaddresses"
-    id          = ID()
-    creation_ts = TS()
+    id         = ID()
+    ts         = TS()
     # Todo: Email validation
-    local       = C(VARCHAR(64), CheckConstraint(min_size("local", 1)), nullable=False)
-    domain      = C(VARCHAR(255), CheckConstraint(min_size("domain", 1)), nullable=False)
-    verified    = C(bool)
-    verifiedts  = C(DATETIME)
+    local      = C(VARCHAR(64), CheckConstraint(MIN_SIZE("local", 1)), nullable=False)
+    domain     = C(VARCHAR(255), CheckConstraint(MIN_SIZE("domain", 1)), nullable=False)
+    verified   = C(BOOL)
+    verifiedts = C(DATETIME)
 
     UniqueConstraint("local", "domain")
 
 
-class LinkUsersAndEmailAddresses(Base):
-    __tablename__ = "link_users_emailaddresses"
-    user         = UserFK()
-    emailaddress = C(INT, FK("emailaddresses.id"), primary_key=True)
-    visibility   = C()  # Todo: Email visibility
-    PrimaryKeyConstraint("user")
+class LinkUserToEmailAddresses(Base):
+    __tablename__ = "link_user_to_email_addresses"
+    user          = UserFK(primary_key=True)
+    email_address = C(INT, FK("email_addresses.id"), primary_key=True)
+    # visibility    = C()  # Todo: Email visibility
 
 
-class Images(Base):
+class Image(Base):
+    __tablename__ = "images"
     id          = ID()
-    creation_ts = TS()
+    ts          = TS()
     uploaded_by = UserFK()
     filename    = C(TEXT, nullable=False)
     public_code = C(TEXT, nullable=False)  # Todo: Discuss optimal public facing name
@@ -113,10 +114,11 @@ class Images(Base):
 
 
 #######################################################################################
-class Rooms(Base):
+class Room(Base):
+    __tablename__ = "rooms"
     # Todo: Consider using Redis for storing ephemeral details of rooms
     id = ID()
-    creation_ts = TS()
+    ts = TS()
     # Todo: Verify code unique among currently valid rooms
     #  Make a function like
     #    CREATE FUNCTION room_code_validator(_code TEXT)
@@ -148,23 +150,25 @@ class RoomEvent(Base):
     #   UserRole: SuperAdmin, Admin, Plebeian PLEBEIAN
     #   EntityType: Room, QuizSession, Quiz, Question, Answer
     #   Action: Started, Finished, Join, Leave, Added, Modified (Requires old and new), Selected, locked-in Removed,
-
-    id = ID()
-    creation_ts = TS()
+    __tablename__ = "room_events"
+    id      = ID()
+    ts      = TS()
     room_id = C(INT, FK("rooms.id"), nullable=False)
 
 
 #######################################################################################
-class Quizzes(Base):
-    id          = ID()
-    creation_ts = TS()
+class Quiz(Base):
+    __tablename__ = "quizzes"
+    id = ID()
+    ts = TS()
 
 
 class Question(Base):
-    id          = ID()
-    creation_ts = TS()
-    quiz_id     = QuizFK()
-    image       = ImageFK()
+    __tablename__ = "questions"
+    id      = ID()
+    ts      = TS()
+    quiz_id = QuizFK()
+    image   = ImageFK()
 
 
 class Answer(Base):
@@ -175,65 +179,67 @@ class Answer(Base):
         Order: Draggable answer whose correctness is decided by its position
         ShortAnswer: Student's write in answers compared to a selection of correct answers
         Essay: Teacher manually grades written responses """
-    id              = ID()
-    creation_ts     = TS()
-    question_id     = QuestionFK()
-    identifier      = C(TEXT)
+    __tablename__ = "answers"
+    id          = ID()
+    ts          = TS()
+    question_id = QuestionFK()
+    identifier  = C(TEXT)
     # Todo: Add validation that ensures two answers on the same question can't have the same order
     # Todo: Ensure order starts at 1 and every gap is filled
-    order           = C(INT, nullable=False)
-    image           = ImageFK()
+    order       = C(INT, nullable=False)
+    image       = ImageFK()
 
 
 class RadioAnswer(Base):
-    __tablename__ = "answer_type_radio"
-    answer_id = AnswerFK()
-    correct = C(BOOL, nullable=False)
-    value = C(NUMERIC, default=1)   # Todo: default = lambda (self): 1 if correct else 0
+    __tablename__ = "answers_type_radio"
+    answer_id = AnswerFK(primary_key=True)
+    correct  = C(BOOL, nullable=False)
+    value    = C(NUMERIC, default=1)   # Todo: default = lambda (self): 1 if correct else 0
     PrimaryKeyConstraint("answer_id")
 
 
 class SelectionAnswer(Base):
-    __tablename__ = "answer_type_selection"
-    answer_id = AnswerFK()
-    correct = C(BOOL, nullable=False)
-    value = C(NUMERIC, default=1)
+    __tablename__ = "answers_type_selection"
+    answer_id = AnswerFK(primary_key=True)
+    correct   = C(BOOL, nullable=False)
+    value     = C(NUMERIC, default=1)
     PrimaryKeyConstraint("answer_id")
 
 
 class OrderAnswer(Base):
-    __tablename__ = "answer_type_order"
-    answer_id = AnswerFK()
+    __tablename__ = "answers_type_order"
+    answer_id        = AnswerFK(primary_key=True)
     correct_position = C(INT, nullable=False)
-    value = C(NUMERIC, default=1)   # Todo: default = lambda (self): 1 if correct else 0
+    value            = C(NUMERIC, default=1)   # Todo: default = lambda (self): 1 if correct else 0
     PrimaryKeyConstraint("answer_id")
 
 
 class ShortAnswer(Base):
-    __tablename__ = "answer_type_short"
-    answer_id = AnswerFK()
+    __tablename__ = "answers_type_short"
+    answer_id = AnswerFK(primary_key=True)
     PrimaryKeyConstraint("answer_id")
 
 
 class CorrectShortAnswers(Base):
-    __tablename__ = "answer_type_short_answers"
-    answer_id = AnswerFK()
-    correct = C(TEXT, nullable=False)
-    value = C(NUMERIC, default=1)
+    __tablename__ = "answers_type_short_answer"
+    answer_id = AnswerFK(primary_key=True)
+    correct   = C(TEXT, nullable=False)
+    value     = C(NUMERIC, default=1)
     PrimaryKeyConstraint("answer_id", "correct")
 
 
 class EssayAnswer(Base):
-    __tablename__ = "answer_type_essay"
-    answer_id = AnswerFK()
+    __tablename__ = "answers_type_essay"
+    answer_id = AnswerFK(primary_key=True)
     PrimaryKeyConstraint("answer_id")
 
 
 class QuizSession(Base):
-    id          = ID()
-    creation_ts = TS()
-    quiz_id     = QuizFK()
-    room_id     = C(INT, FK("rooms.id"))
+    __tablename__ = "quiz_sessions"
+    id      = ID()
+    ts      = TS()
+    quiz_id = QuizFK()
+    room_id = C(INT, FK("rooms.id"))
 
 
 class QuizSessionEvent(Base):
@@ -250,6 +256,7 @@ class QuizSessionEvent(Base):
         Plebeian:Question:{{start | finish}}
         Plebeian:Answer:{{select | lock-in}}
     """
+    __tablename__ = "quiz_session_events"
     # Order taxonomy for copy-editors (Coders shouldn't have to worry about it.)
     #   UserRole: SuperAdmin, Admin, Plebeian
     #   EntityType: Quiz, Question, Answer
@@ -257,94 +264,95 @@ class QuizSessionEvent(Base):
     # We purposefully do not give Admins the ability to add questions mid quiz
     # Adding questions mid quiz seems like a good way for things to fall apart
     id              = ID()
-    creation_ts     = TS()
-    quiz_session_id = C(INT, FK("quiz_session.id"), nullable=False)
+    ts              = TS()
+    quiz_session_id = C(INT, FK("quiz_sessions.id"), nullable=False)
     user_id         = UserFK()
+
 
 class _qse:
     """ Quiz Session Event __tablename__ mixin to reduce typing during development """
-    @property
-    def __tablename__(self):
-        _, entity_type, action = self.__class__.__name__.split("_")
+    @declared_attr
+    def __tablename__(cls):
+        _QSE, entity_type, action = cls.__name__.split("_")
         # Split action on capital letters
         action = "".join("_" + x.lower() if x.isupper() else x for x in action)
-        return f"quiz_session_event_{entity_type}_{action}"
+        return f"quiz_session_events__{entity_type}__{action}"
 
 
 class QSE_Teacher_QuizStarted(Base, _qse):
-    quiz_session_event_id = QseFK()
+    quiz_session_event_id = QseFK(primary_key=True)
 
 
 class QSE_Teacher_QuizFinished(Base, _qse):
-    quiz_session_event_id = QseFK()
+    quiz_session_event_id = QseFK(primary_key=True)
 
 
 class QSE_Teacher_QuestionStarted(Base, _qse):
-    quiz_session_event_id = QseFK()
+    quiz_session_event_id = QseFK(primary_key=True)
     # Todo: Validation that you can't start the same question twice before finishing it
-    question_id           = QuestionFK()
+    question_id           = QuestionFK(primary_key=True)
 
 
 class QSE_Teacher_QuestionFinished(Base, _qse):
-    quiz_session_event_id = QseFK()
-    question_id           = QuestionFK()
+    quiz_session_event_id = QseFK(primary_key=True)
+    question_id           = QuestionFK(primary_key=True)
 
 
 class QSE_Teacher_QuestionModified(Base, _qse):
-    quiz_session_event_id = QseFK()
-    old_question          = QuestionFK()
+    quiz_session_event_id = QseFK(primary_key=True)
+    old_question          = QuestionFK(primary_key=True)
     new_question          = QuestionFK()
 
 
 class QSE_Teacher_QuestionRemoved(Base, _qse):
-    quiz_session_event_id = QseFK()
-    question_id           = QuestionFK()
+    quiz_session_event_id = QseFK(primary_key=True)
+    question_id           = QuestionFK(primary_key=True)
 
 
 class QSE_Teacher_AnswerAdded(Base, _qse):
-    quiz_session_event_id = QseFK()
-    new_answer            = AnswerFK()
+    quiz_session_event_id = QseFK(primary_key=True)
+    new_answer            = AnswerFK(primary_key=True)
 
 
 class QSE_Teacher_AnswerModified(Base, _qse):
-    quiz_session_event_id = QseFK()
-    old_answer            = AnswerFK()
+    quiz_session_event_id = QseFK(primary_key=True)
+    old_answer            = AnswerFK(primary_key=True)
     new_answer            = AnswerFK()
 
 
 class QSE_Teacher_AnswerRemoved(Base, _qse):
-    quiz_session_event_id = QseFK()
-    answer_id             = AnswerFK()
+    quiz_session_event_id = QseFK(primary_key=True)
+    answer_id             = AnswerFK(primary_key=True)
 
 
 class QSE_Student_QuizStarted(Base, _qse):
-    quiz_session_event_id = QseFK()
+    quiz_session_event_id = QseFK(primary_key=True)
 
 
 class QSE_Student_QuizFinished(Base, _qse):
-    quiz_session_event_id = QseFK()
+    quiz_session_event_id = QseFK(primary_key=True)
 
 
-class QSE_StudentQuestionStarted(Base, _qse):
-    quiz_session_event_id = QseFK()
-    question_id           = QuestionFK()
+class QSE_Student_QuestionStarted(Base, _qse):
+    quiz_session_event_id = QseFK(primary_key=True)
+    question_id           = QuestionFK(primary_key=True)
 
 
-class QSE_StudentQuestionFinished(Base, _qse):
-    quiz_session_event_id = QseFK()
-    question_id           = QuestionFK()
+class QSE_Student_QuestionFinished(Base, _qse):
+    quiz_session_event_id = QseFK(primary_key=True)
+    question_id           = QuestionFK(primary_key=True)
 
 
 class QSE_Student_AnswerSelected(Base, _qse):
-    quiz_session_event_id = QseFK()
+    quiz_session_event_id = QseFK(primary_key=True)
     # Todo: Implement human waiting period:
     #  Perhaps don't add event if more than 3 selections happen in less than .2 seconds?
-    answer_id             = AnswerFK()
+    answer_id             = AnswerFK(primary_key=True)
 
 
 class QSE_Student_AnswerLockedIn(Base, _qse):
-    quiz_session_event_id = QseFK()
-    answer_id             = AnswerFK()
+    quiz_session_event_id = QseFK(primary_key=True)
+    answer_id             = AnswerFK(primary_key=True)
 
 
 # fmt: on
