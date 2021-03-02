@@ -1,10 +1,11 @@
 from os import path
-from typing import Optional
 
 from fastapi import APIRouter, Cookie, Depends, Query, Request, WebSocket, status, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.sql.expression import insert, select, update, delete, text
+from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import insert, update, delete, text, desc
 from . import db
 
 router = APIRouter()
@@ -26,16 +27,10 @@ async def ws_enter_room(ws: WebSocket):
         await ws.send_text(data)
 
 
-@router.get("/room/{roomcode}", response_class=HTMLResponse)
-async def room(roomcode: str, r: Request):
-    return t.TemplateResponse(
-        "room.html",
-        {
-            "request": r,
-            "roomcode": roomcode.upper(),
-            "room_text": "This is the room text",
-        },
-    )
+@router.get("/room/{roomcode}")
+async def room(roomcode: str):
+    room_data = room_details(roomcode)
+    return room_data
 
 
 @router.websocket("/ws/room/{roomcode}")
@@ -50,15 +45,45 @@ def api(endpoint):
     return f"/api/v1/{endpoint}"
 
 
+class RoomDetails(BaseModel):
+    code: str
+    active: bool
+
+
+# Todo: some sort of refactoring so I can call api.room_details()
 @router.get(api("room/details/{code}"))
 def room_details(code: str):
+    with db.Session() as s:
+        q = s.query(db.Room).filter_by(code=code, active=True).order_by(desc("ts")).first()
+        return RoomDetails(
+            code=code,
+            active=False if (q is None or not q.active) else True,
+        )
+
+
+@router.get(api("room/close/{code}"))
+def close_room(code: str):
+    # Todo: Validate user has authority to close room or that room is closable
     pass
 
 
 @router.get(api("room/create"))
 def create_room():
-    stmt = insert(db.Room)
-    return {"code": code, "url": url}
+    while True:
+        try:
+            with db.Session() as s:
+                room = db.Room(code=db.generate_room_code(), active=True)
+                s.add(room)
+                s.commit()
+                code = room.code
+            # Todo: actual url
+            return RoomDetails(
+                code=code,
+                active=False if (s in None or not s.active) else True
+            )
+        except IntegrityError:
+            print("Oh no, trying again")
+            return create_room()
 
 
 # @router.get("/example_home", response_class=HTMLResponse)

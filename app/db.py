@@ -1,5 +1,6 @@
 import enum
 import os
+import random
 
 from sqlalchemy.sql import functions
 from sqlalchemy.sql.expression import text
@@ -40,9 +41,8 @@ def get_uri() -> str:
 
 uri = get_uri()
 engine = create_engine(uri, echo=True)  # Show SQL Statements for development
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
+Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # CheckConstraint validates at the database level
@@ -169,18 +169,16 @@ class Image(Base):
 
 class Room(Base):
     __tablename__ = "rooms"
-    # Guarantees unique room code (of currently valid rooms).
-    # Two rooms can not share the same code if they are both valid.
+    # Guarantees unique room code (of currently active rooms).
+    # Two rooms can not share the same code if they are both active.
     # Todo: add time component so people can't get the same room right after each other
     __table_args__ = (
-        ExcludeConstraint(("code", "="), where=(text("valid = TRUE"))),
+        ExcludeConstraint(("code", "="), where=(text("active = TRUE"))),
     )
     id = ID()
     ts = TS()
     code = C(TEXT, nullable=False)
-    valid = C(BOOL)
-
-
+    active = C(BOOL)
 
 
 class RoomRole(enum.Enum):
@@ -407,3 +405,10 @@ class QSE_Student_AnswerSelected(Base, _qse):
 class QSE_Student_AnswerLockedIn(Base, _qse):
     quiz_session_event_id = QseFK(primary_key=True)
     answer_id = AnswerFK(primary_key=True)
+
+
+########################################################################################
+# Functions
+def generate_room_code(length=5) -> str:
+    return "".join([random.choice("ABCDEFGHJKMNPQRSTUVWXYZ23456789") for i in range(length)])
+

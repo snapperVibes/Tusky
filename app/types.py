@@ -10,4 +10,6 @@ class Role(NamedTuple):
     emoji: str
 
 
-identifiers = "ABCDEFGHJKMNPQRSTUVWXYZ123456789"
+class SnapAPI():
+    """ Decorator class whose instances store decorated methods """
+    # Todo: Implement (or not, it's a lot of work for just a wrapper)
