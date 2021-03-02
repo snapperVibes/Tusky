@@ -15,9 +15,16 @@ Class|PascalCase|`class ExampleClass: pass`
 Raw SQL|SCREAMING_SNAKE_CASE|`select_sql = "SELECT column FROM table WHERE x = y;"`
 SQL Type|SCREAMING_SNAKE_CASE|`from sqlalchemy import BLOB`
 Database Function|SCREAMING_SNAKE_CASE|`def EXAMPLE_SQL_FUNC(): pass`
-Table|TuskyTable|<pre lang="python">class ExampleTable(Base):<br>    \_\_tablename__ = "example_tables"<br>    id               = C(INT, IDENTITY(), primary_key=True)<br>    long_column_name = C(TEXT)</pre>
+Table|TuskyTable|*See <a href="#TuskyTable">TuskyTable</a>
 
 ### TuskyTable
+#### Example
+```
+class ExampleTable(Base):
+    __tablename__ = "example_tables"
+    id               = C(INT, IDENTITY(), primary_key=True)
+    long_column_name = C(TEXT)
+```
 #### Core Table
   - Primary key is identity (`id = ID()`)
   - The class name is singular PascalCase*.
