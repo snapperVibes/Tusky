@@ -29,7 +29,7 @@ Table|TuskyTable|<pre lang="python">class ExampleTable(Base):<br>    \_\_tablena
 TODO: Naming schema
   - Primary key is foreign key to core table
 
-##### Linking Tables
+#### Linking Tables
 Style|Class Name|\_\_tablename__
 ---|---|---
 One to Many|`LinkThingToThings`|`"link_thing_to_things"`
