@@ -4,6 +4,8 @@ from typing import Optional
 from fastapi import APIRouter, Cookie, Depends, Query, Request, WebSocket, status, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.sql.expression import insert, select, update, delete, text
+from . import db
 
 router = APIRouter()
 
@@ -31,8 +33,8 @@ async def room(roomcode: str, r: Request):
         {
             "request": r,
             "roomcode": roomcode.upper(),
-            "room_text": "This is the room text"
-        }
+            "room_text": "This is the room text",
+        },
     )
 
 
@@ -48,14 +50,15 @@ def api(endpoint):
     return f"/api/v1/{endpoint}"
 
 
-# @router.get(api("room/details/{code}"))
-# def room_details(code: str):
-#     return db.rooms.get(code.upper(), {"active": False})
-#
-#
-# @router.get(api("room/create"))
-# def create_room():
-#     return db.new_room()
+@router.get(api("room/details/{code}"))
+def room_details(code: str):
+    pass
+
+
+@router.get(api("room/create"))
+def create_room():
+    stmt = insert(db.Room)
+    return {"code": code, "url": url}
 
 
 # @router.get("/example_home", response_class=HTMLResponse)
