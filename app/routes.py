@@ -5,8 +5,6 @@ from fastapi import APIRouter, Cookie, Depends, Query, Request, WebSocket, statu
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from .types import db
-
 router = APIRouter()
 
 HERE = path.dirname(path.realpath(__file__))
@@ -46,22 +44,18 @@ async def ws_room(roomcode: str, ws: WebSocket):
         await ws.send_text(f"Welcome, {user}")
 
 
-
 def api(endpoint):
     return f"/api/v1/{endpoint}"
 
 
-@router.get(api("room/details/{code}"))
-def room_details(code: str):
-    return db.rooms.get(code.upper(), {"active": False})
-
-
-@router.get(api("room/create"))
-def create_room():
-    return db.new_room()
-
-
-
+# @router.get(api("room/details/{code}"))
+# def room_details(code: str):
+#     return db.rooms.get(code.upper(), {"active": False})
+#
+#
+# @router.get(api("room/create"))
+# def create_room():
+#     return db.new_room()
 
 
 # @router.get("/example_home", response_class=HTMLResponse)

@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app import routes

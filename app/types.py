@@ -9,21 +9,5 @@ class Role(NamedTuple):
     name: str
     emoji: str
 
+
 identifiers = "ABCDEFGHJKMNPQRSTUVWXYZ123456789"
-
-# In-Memory types for prototyping. If these are useful, they might stick around
-class _MockDB:
-    pass
-
-
-db = _MockDB()
-
-db.rooms = {
-    "ABCDE": {
-        "active": True
-    }
-}
-
-
-
-
