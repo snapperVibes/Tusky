@@ -3,40 +3,18 @@
 
 <!-- 😅 <a href="http://vanilla-js.com/"><img alt="Vanilla JS" src=http://vanilla-js.com/assets/button.png></a> -->
 ## Style
-
-Tusky uses some non-standard styling.
-
-Token|Style|Example
----|---|---
-Variable|snake_case|`example_variable = 5`
-Constant|SCREAMING_SNAKE_CASE|`APPLICATION_NAME = "tusky"`
-Function|snake_case|`def example_func: pass`
-Class|PascalCase|`class ExampleClass: pass`
-Raw SQL|SCREAMING_SNAKE_CASE|`select_sql = "SELECT column FROM table WHERE x = y;"`
-SQL Type|SCREAMING_SNAKE_CASE|`from sqlalchemy import BLOB`
-Database Function|SCREAMING_SNAKE_CASE|`def EXAMPLE_SQL_FUNC(): pass`
-Table|TuskyTable|*See <a href="#TuskyTable">TuskyTable</a>
-
-### TuskyTable
-#### Example
-```
-class ExampleTable(Base):
-    __tablename__ = "example_tables"
-    id               = C(INT, IDENTITY(), primary_key=True)
-    long_column_name = C(TEXT)
-```
-#### Core Table
+### Core Table
   - Primary key is identity (`id = ID()`)
   - The class name is singular PascalCase*.
   - The \_\_tablename__ is plural snake_case*.
   - Each column has the equal-sign lined up a single space after the longest column name.
   - Columns and `__tablename__` only line up coincidentally.
 
-#### Lookup Table
+### Lookup Table
 TODO: Naming schema
   - Primary key is foreign key to core table
 
-#### Linking Tables
+### Linking Tables
 Style|Class Name|\_\_tablename__
 ---|---|---
 One to Many|`LinkThingToThings`|`"link_thing_to_things"`

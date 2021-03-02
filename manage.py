@@ -3,6 +3,7 @@ import click
 
 from app import create_all, drop_all
 
+
 @click.group()
 def cli():
     pass
@@ -11,17 +12,17 @@ def cli():
 @click.command()
 def initdb():
     create_all()
-    click.echo("Database created 👍")
+    click.echo("Database created")
 
 
 @click.command()
 def dropdb():
     drop_all()
-    click.echo("Database dropped.")
+    click.echo("Database dropped")
 
 
 cli.add_command(initdb)
 cli.add_command(dropdb)
 
-if __name__ == '__main__':
-   cli()
+if __name__ == "__main__":
+    cli()
