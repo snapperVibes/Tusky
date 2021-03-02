@@ -14,6 +14,7 @@ python-socketio
 SQLAlchemy==1.4.0b3 # ORM (Object Relational Mapper)
 alembic             # Database migration tool
 psycopg2            # Database driver for Postgres. TODO: Use async version
+click               # Command-Line Interface Creation Kit
 
 ##############################################################################
 # Deployment

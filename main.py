@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app import routes
+from app import router
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ async def shutdown():
     print("Shutting down")
 
 
-app.include_router(routes.router)
+app.include_router(router)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
