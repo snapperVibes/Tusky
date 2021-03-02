@@ -1,9 +1,7 @@
 """ Command Line initdb and dropdb functions for faster devolpment """
 import click
 
-from app import Base, engine
-
-metadata = Base.metadata
+from app import create_all, drop_all
 
 @click.group()
 def cli():
@@ -12,13 +10,13 @@ def cli():
 
 @click.command()
 def initdb():
-    metadata.create_all(engine)
+    create_all()
     click.echo("Database created 👍")
 
 
 @click.command()
 def dropdb():
-    metadata.drop_all(engine)
+    drop_all()
     click.echo("Database dropped.")
 
 

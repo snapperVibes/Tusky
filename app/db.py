@@ -38,18 +38,6 @@ uri = get_uri()
 engine = create_engine(uri, echo=True)  # Show SQL Statements for development
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# metadata = MetaData(
-#     naming_convention={
-#         "ix": "ix__%(column_0_label)s",
-#         "uq": "uq__%(table_name)s__%(column_0_name)s",
-#         "ck": "ck__%(table_name)s__%(column_0_name)s",
-#         "fk": "fk__%(table_name)s__%(column_0_name)s__%(reffered_table_name)s",
-#         "pk": "pk__%(table_name)s",
-#     }
-# )
-
-# Base = declarative_base(metadata=metadata)
-
 Base = declarative_base()
 
 
@@ -303,8 +291,8 @@ class _qse:
     def __tablename__(cls):
         _QSE, entity_type, action = cls.__name__.split("_")
         # Split action on capital letters
-        action = "".join("_" + x.lower() if x.isupper() else x.lower() for x in action)
-        return f"quiz_session_events__{entity_type}__{action}"
+        action = "".join("_" + x.lower() if x.isupper() else x for x in action)
+        return f"quiz_session_events__{entity_type.lower()}__{action}"
 
 
 class QSE_Teacher_QuizStarted(Base, _qse):
