@@ -1,5 +1,7 @@
 aiofiles==0.6.0
 alembic==1.5.5
+async-exit-stack==1.0.1
+async-generator==1.10
 attrs==20.3.0
 bidict==0.21.2
 click==7.1.2

@@ -5,8 +5,15 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.future import select
+from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import insert, update, delete, text, desc
-from . import db
+
+from . import (
+    dependencies as dep,
+    models as m,
+)
+from .schema import RoomDetails
 
 router = APIRouter()
 
@@ -45,44 +52,39 @@ def api(endpoint):
     return f"/api/v1/{endpoint}"
 
 
-class RoomDetails(BaseModel):
-    code: str
-    active: bool
-
-
 # Todo: some sort of refactoring so I can call api.room_details()
 @router.get(api("room/details/{code}"))
-def room_details(code: str):
-    with db.Session() as s:
-        q = s.query(db.Room).filter_by(code=code, active=True).order_by(desc("ts")).first()
-        return RoomDetails(
-            code=code,
-            active=False if (q is None or not q.active) else True,
-        )
+def room_details(code: str, s: Session = dep.get_session):
+    q = s.query(m.Room).filter_by(code=code, active=True).order_by(desc("ts")).first()
+    return RoomDetails(
+        code=code,
+        active=False if (q is None or not q.active) else True,
+    )
 
 
 @router.get(api("room/close/{code}"))
-def close_room(code: str):
+def close_room(code: str, s: Session = dep.get_session):
     # Todo: Validate user has authority to close room or that room is closable
-    pass
+    #  THIS CODE CANNOT MAKE IT TO PRODUCTION WITHOUT VALIDATION
+    stmt = select(m.Room).filter_by(code=code, active=True)
+    room = s.execute(stmt).scalar()
+    print(room)
+    room.active = False
+    s.commit()
+    return RoomDetails.from_orm(room)
+
 
 
 @router.get(api("room/create"))
-def create_room():
+def create_room(s: Session = dep.get_session) -> RoomDetails:
     while True:
         try:
-            with db.Session() as s:
-                room = db.Room(code=db.generate_room_code(), active=True)
-                s.add(room)
-                s.commit()
-                code = room.code
+            room = m.Room(code=m.generate_room_code(), active=True)
+            s.add(room)
+            s.commit()
             # Todo: actual url
-            return RoomDetails(
-                code=code,
-                active=False if (s in None or not s.active) else True
-            )
+            return RoomDetails.from_orm(room)
         except IntegrityError:
-            print("Oh no, trying again")
             return create_room()
 
 
