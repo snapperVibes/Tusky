@@ -1,5 +1,9 @@
+from fastapi.staticfiles import StaticFiles
+
 from .db import Base, engine
 from .routes import router
+
+static = StaticFiles(directory="app/static")
 
 
 def create_all(**kw):
@@ -12,4 +16,4 @@ def drop_all(**kw):
     return Base.metadata.drop_all(engine, **kw)
 
 
-__all__ = ["create_all", "drop_all", "router"]
+__all__ = ["create_all", "dependencies", "drop_all", "models", "router", "static"]
