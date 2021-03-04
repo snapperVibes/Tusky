@@ -3,15 +3,17 @@ from pydantic import BaseModel, ValidationError
 from pydantic.dataclasses import dataclass
 
 
+class ORMModel(BaseModel):
+    class Config:
+        orm_mode = True
+
+
 @dataclass
 class Role:
     name: str
     emoji: str
 
 
-class RoomDetails(BaseModel):
+class RoomDetails(ORMModel):
     code: str
     active: bool
-
-    class Config:
-        orm_mode = True

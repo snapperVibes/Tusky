@@ -43,7 +43,7 @@ def ID(**kw):
         UUID(as_uuid=True),
         primary_key=True,
         server_default=text("gen_random_uuid()"),
-        **kw
+        **kw,
     )
 
 
@@ -154,9 +154,7 @@ class Room(Base):
     # Guarantees unique room code (of currently active rooms).
     # Two rooms can not share the same code if they are both active.
     # Todo: add time component so people can't get the same room right after each other
-    __table_args__ = (
-        ExcludeConstraint(("code", "="), where=(text("active = TRUE"))),
-    )
+    __table_args__ = (ExcludeConstraint(("code", "="), where=(text("active = TRUE"))),)
     id = ID()
     ts = TS()
     code = C(TEXT, nullable=False)
@@ -388,7 +386,10 @@ class QSE_Student_AnswerLockedIn(Base, _qse):
     quiz_session_event_id = QseFK(primary_key=True)
     answer_id = AnswerFK(primary_key=True)
 
+
 ########################################################################################
 # Functions
 def generate_room_code(length=5) -> str:
-    return "".join([random.choice("ABCDEFGHJKMNPQRSTUVWXYZ23456789") for i in range(length)])
+    return "".join(
+        [random.choice("ABCDEFGHJKMNPQRSTUVWXYZ23456789") for i in range(length)]
+    )
