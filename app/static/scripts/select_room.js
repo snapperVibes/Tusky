@@ -20,7 +20,7 @@ function joinRoom(event) {
     event.preventDefault()
 }
 function createRoom(event) {
-    var roomcode = document.getElementById("newRoomCode").value.toUpperCase()
+    var roomcode = document.getElementById("createRoom").value.toUpperCase()
     fetch(roomApi + "create/").then(
         (resp) => resp.json()
     ).then(

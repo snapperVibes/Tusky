@@ -1,6 +1,7 @@
 from os import path
 
 from fastapi import APIRouter, Cookie, Depends, Query, Request, WebSocket, status, Form
+from fastapi.openapi.models import Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -23,7 +24,7 @@ t = Jinja2Templates(directory=path.join(HERE, "templates"))
 
 @router.get("/", response_class=HTMLResponse)
 async def home(r: Request):
-    return t.TemplateResponse("home.html", {"request": r})
+    return t.TemplateResponse("root.html", {"request": r})
 
 
 @router.websocket("/ws")
@@ -34,10 +35,11 @@ async def ws_enter_room(ws: WebSocket):
         await ws.send_text(data)
 
 
-@router.get("/room/{roomcode}")
-async def room(roomcode: str):
+@router.get("/room/{roomcode}", response_class=HTMLResponse)
+async def room(roomcode: str, req: Request, resp: Response):
     room_data = room_details(roomcode)
-    return room_data
+    resp.set_cookie(key="x", value="y")
+    return t.TemplateResponse("room.html", {"request": req, "room": room_data})
 
 
 @router.websocket("/ws/room/{roomcode}")
@@ -53,7 +55,7 @@ def api(endpoint):
 
 
 # Todo: some sort of refactoring so I can call api.room_details()
-@router.get(api("room/details/{code}"))
+@router.get(api("room/details/{code}"), tags=["Room"])
 def room_details(code: str, s: Session = dep.get_session):
     q = s.query(m.Room).filter_by(code=code, active=True).order_by(desc("ts")).first()
     return RoomDetails(
@@ -62,7 +64,7 @@ def room_details(code: str, s: Session = dep.get_session):
     )
 
 
-@router.get(api("room/close/{code}"))
+@router.get(api("room/close/{code}"), tags=["Room"])
 def close_room(code: str, s: Session = dep.get_session):
     # Todo: Validate user has authority to close room or that room is closable
     #  THIS CODE CANNOT MAKE IT TO PRODUCTION WITHOUT VALIDATION
@@ -74,8 +76,7 @@ def close_room(code: str, s: Session = dep.get_session):
     return RoomDetails.from_orm(room)
 
 
-
-@router.get(api("room/create"))
+@router.get(api("room/create"), tags=["Room"])
 def create_room(s: Session = dep.get_session) -> RoomDetails:
     while True:
         try:

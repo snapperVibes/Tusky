@@ -1,17 +1,12 @@
 from fastapi import Depends
-from sqlalchemy.orm.session import (
-    sessionmaker,
-    Session as SessionType,
-)  # For IDE autocomplete
+from sqlalchemy.orm.session import Session as SessionType  # For IDE autocomplete
 
 from . import db
-
-Session = sessionmaker(autocommit=False, autoflush=True, bind=db.engine, future=True)
 
 
 class _SessionContextManager:
     def __init__(self):
-        self.db = Session()
+        self.db = db.Session()
 
     def __enter__(self):
         return self.db
@@ -21,9 +16,9 @@ class _SessionContextManager:
         self.db.close()
 
 
-async def _get_db() -> SessionType:
+async def _get_session() -> SessionType:
     with _SessionContextManager() as session:
         yield session
 
 
-get_session = Depends(_get_db)
+get_session = Depends(_get_session)

@@ -17,3 +17,5 @@ def get_uri() -> str:
 uri = get_uri()
 engine = create_engine(uri, echo=True)  # Show SQL Statements for development
 Base = declarative_base()
+Session = sessionmaker(autocommit=False, autoflush=True, bind=engine, future=True)
+
