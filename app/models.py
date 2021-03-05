@@ -101,20 +101,14 @@ class SiteRole(enum.Enum):
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = (
-        UniqueConstraint("name", "number"),
-    )
+    __table_args__ = (UniqueConstraint("name", "number"),)
     # User names must be between 1 and 32 characters long
     id = ID()
     ts = TS()
     name = C(VARCHAR(32), CheckConstraint(min_size("name", 1)), nullable=False)
-    number = C(
-        INT,
-        nullable=False
-    )
+    number = C(INT, nullable=False)
     key = C(BYTEA, nullable=False)
     site_role = C(ENUM(SiteRole), default=SiteRole.PLEBEIAN, nullable=False)
-
 
     @validates("name")
     def validate_name(self, _, name) -> str:
@@ -125,9 +119,7 @@ class User(Base):
 
 class EmailAddress(Base):
     __tablename__ = "email_addresses"
-    __table_args__ = (
-        UniqueConstraint("mailbox", "hostname"),
-)
+    __table_args__ = (UniqueConstraint("mailbox", "hostname"),)
     # Application Techniques for Checking and Transformation of Names:
     #   https://tools.ietf.org/html/rfc3696
     id = ID()
@@ -137,7 +129,6 @@ class EmailAddress(Base):
     hostname = C(VARCHAR(255), CheckConstraint(min_size("domain", 1)), nullable=False)
     verified = C(BOOL)
     verifiedts = C(DATETIME)
-
 
 
 class LinkUserToEmailAddresses(Base):
@@ -388,6 +379,3 @@ class QSE_Student_AnswerSelected(Base, _qse):
 class QSE_Student_AnswerLockedIn(Base, _qse):
     quiz_session_event_id = QseFK(primary_key=True)
     answer_id = AnswerFK(primary_key=True)
-
-
-

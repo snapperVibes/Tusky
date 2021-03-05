@@ -19,6 +19,7 @@ class RoomDetails(ORMModel):
     active: bool
 
 
-class UserDetails(ORMModel):
+class CreateUser(ORMModel):
     name: str
-    number: int
+    email: str
+    password: str

@@ -4,6 +4,7 @@ import random
 from typing import Optional
 
 import bcrypt
+
 # Todo: Fix flanker 'symbol is unreachable'
 from flanker.addresslib import address
 from fastapi import APIRouter
@@ -16,7 +17,7 @@ from app import (
     dependencies as dep,
     models as m,
 )
-from app.schema import RoomDetails
+from app.schema import RoomDetails, CreateUser
 
 router = APIRouter()
 
@@ -33,7 +34,7 @@ def generate_room_code(length=5) -> str:
     )
 
 
-@router.get(api("room/create"), tags=["Room"])
+@router.post(api("room/create"), tags=["Room"])
 def create_room(s: Session = dep.get_session) -> RoomDetails:
     while True:
         try:
@@ -47,7 +48,7 @@ def create_room(s: Session = dep.get_session) -> RoomDetails:
             return create_room()
 
 
-@router.get(api("room/close/{code}"), tags=["Room"])
+@router.post(api("room/close/{code}"), tags=["Room"])
 def close_room(code: str, s: Session = dep.get_session):
     # Todo: Validate user has authority to close room or that room is closable
     #  THIS CODE CANNOT MAKE IT TO PRODUCTION WITHOUT VALIDATION
@@ -70,28 +71,39 @@ def room_details(code: str, s: Session = dep.get_session):
 
 ########################################################################################
 # User
-@router.get(api("user/create"), tags=["User"])
-def create_user(name: str, password: str, email: Optional[str] = None, s: Session = dep.get_session):
+@router.post(api("user/create"), tags=["User"])
+def create_user(user: CreateUser, s: Session = dep.get_session):
     # Hash password of any length
-    sha = hashlib.sha256(password.encode("utf-8")).digest()
+    sha = hashlib.sha256(user.password.encode("utf-8")).digest()
     b64 = base64.b64encode(sha)
     hashed = bcrypt.hashpw(b64, bcrypt.gensalt(rounds=14))
-    user = m.User(name=name, key=hashed)
 
-    email = address.validate_address(email)
+    email = address.validate_address(user.email)
+
     # Generate user number
-    q = s.query(m.User.number).filter_by(name=name).order_by(desc("number")).first()
+    q = (
+        s.query(m.User.number)
+        .filter_by(name=user.name)
+        .order_by(desc("number"))
+        .first()
+    )
     if q is None:
         number = 1
     else:
         number = q.number + 1
 
-    user_stmt = insert(m.User).values(name=name, key=hashed, number=number).returning(m.User.id)
-    email_stmt = insert(m.EmailAddress).values(mailbox=email.mailbox, hostname=email.hostname).returning(m.EmailAddress.id)
-    user_id = s.execute(user_stmt).first().id
+    user_stmt = (
+        insert(m.User)
+        .values(name=user.name, key=hashed, number=number)
+        .returning(m.User.id, m.User.number)
+    )
+    email_stmt = (
+        insert(m.EmailAddress)
+        .values(mailbox=email.mailbox, hostname=email.hostname)
+        .returning(m.EmailAddress.id)
+    )
+    user_id, user_num = s.execute(user_stmt).first().id
     email_id = s.execute(email_stmt).first().id
     s.add(m.LinkUserToEmailAddresses(user=user_id, email_address=email_id))
     s.commit()
-    return s
-
-
+    return True

@@ -1,0 +1,35 @@
+{% extends '_base.html' %}
+<!--Todo: Make this an iframe popup-->
+{% block main %}
+
+{% include '_header.html' %}
+<div class="content" xmlns="http://www.w3.org/1999/html">
+    <div class="login">
+        <div id="tuskyFormContainerRegister" role="main">
+            <form id="tusky_form_login" action=""">
+                <fieldset class="login-fieldset">
+                    <h2>LOGIN</h2>
+                    <div class="form-group username">
+                        <label for="username" class="text-signin">
+                            USER NAME
+                        </label>
+                        <input name="username" id="username" class="form-control tusky-input" type="text" maxlength="32" autocapitalize="off" autocomplete="off" required>
+                    </div>
+                    <div class="form-group password">
+                        <label for="password" class="text-signin">
+                            PASSWORD
+                        </label>
+                        <input type="password" name="password" id="password" class="form-control tusky-input" autocapitalize="off" autocomplete="off" required>
+                    </div>
+                    <button id="button-login" class="button-signin">
+                        <span class="register-text">
+                            Register
+                        </span>
+                    </button>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', path='scripts/login.js') }}"></script>
+{% endblock %}

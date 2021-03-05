@@ -1,11 +1,12 @@
-ws = new WebSocket("ws://localhost:8000/ws");
 const roomApi = "http://localhost:8000/api/v1/room/"
+let ws;
+ws = new WebSocket("ws://localhost:8000/ws");
 // ws.onmessage = function (event) {
 //     var notice = document.getElementById("notice").innerHTML = event.data
 // };
 function joinRoom(event) {
     var roomcode = document.getElementById("roomCode").value.toUpperCase()
-    fetch(roomApi + "details/" + roomcode).then(
+    fetch(api + "details/" + roomcode).then(
         (resp) => resp.json()
     ).then(
         function (obj) {

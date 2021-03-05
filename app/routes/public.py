@@ -24,6 +24,11 @@ async def login(req: Request):
     return t.TemplateResponse("login.html", {"request": req})
 
 
+@router.get("/register", response_class=HTMLResponse)
+async def register(req: Request):
+    return t.TemplateResponse("register.html", {"request": req})
+
+
 @router.get("/room/{roomcode}", response_class=HTMLResponse)
 async def room(roomcode: str, req: Request, s: Session = dep.get_session):
     room_data = api.room_details(roomcode, s)
