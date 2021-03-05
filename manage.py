@@ -21,8 +21,16 @@ def dropdb():
     click.echo("Database dropped")
 
 
+@click.command()
+def resetdb():
+    drop_all()
+    create_all()
+    click.echo("Database reset")
+
+
 cli.add_command(initdb)
 cli.add_command(dropdb)
+cli.add_command(resetdb)
 
 if __name__ == "__main__":
     cli()

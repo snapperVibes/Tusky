@@ -1,8 +1,8 @@
 {% extends '_base.html' %}
 {% block main %}
-{% if not room.code %}
-<!-- Todo: Prettify this page. It's not important because the user should never be directed to this page: rather, it only appears when they type in the url to a closed room manually-->
+{% if not room.active %}
 <h1>Room {{ room.code }} does not exist</h1>
+
 {% else %}
 <h1>Room {{ room.code }}</h1>
 

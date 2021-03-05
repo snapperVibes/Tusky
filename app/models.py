@@ -1,4 +1,6 @@
 import enum
+import hashlib
+import os
 import random
 
 from sqlalchemy.sql import functions
@@ -10,7 +12,7 @@ from sqlalchemy.sql.schema import (
     PrimaryKeyConstraint,
     UniqueConstraint,
 )
-from sqlalchemy.orm import declared_attr, validates
+from sqlalchemy.orm import declared_attr, validates, Session
 from sqlalchemy.sql.sqltypes import (
     LargeBinary as BLOB,
     BOOLEAN as BOOL,
@@ -21,7 +23,7 @@ from sqlalchemy.sql.sqltypes import (
     TEXT,
     VARCHAR,
 )
-from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint
+from sqlalchemy.dialects.postgresql import BYTEA, UUID, ExcludeConstraint
 
 from .db import Base
 from .schema import Role
@@ -40,7 +42,7 @@ def min_size(column: str, minimum) -> str:
 def ID(**kw):
     # return C(INT, IDENTITY(), primary_key=True, **kw)
     return C(
-        UUID(as_uuid=True),
+        UUID(),
         primary_key=True,
         server_default=text("gen_random_uuid()"),
         **kw,
@@ -99,15 +101,20 @@ class SiteRole(enum.Enum):
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        UniqueConstraint("name", "number"),
+    )
     # User names must be between 1 and 32 characters long
     id = ID()
     ts = TS()
     name = C(VARCHAR(32), CheckConstraint(min_size("name", 1)), nullable=False)
-    salt = C(TEXT, nullable=False)
-    password = C(TEXT, nullable=False)
-    site_role = C(ENUM(SiteRole), nullable=False)
+    number = C(
+        INT,
+        nullable=False
+    )
+    key = C(BYTEA, nullable=False)
+    site_role = C(ENUM(SiteRole), default=SiteRole.PLEBEIAN, nullable=False)
 
-    UniqueConstraint("name", "number")
 
     @validates("name")
     def validate_name(self, _, name) -> str:
@@ -118,17 +125,19 @@ class User(Base):
 
 class EmailAddress(Base):
     __tablename__ = "email_addresses"
+    __table_args__ = (
+        UniqueConstraint("mailbox", "hostname"),
+)
     # Application Techniques for Checking and Transformation of Names:
     #   https://tools.ietf.org/html/rfc3696
     id = ID()
     ts = TS()
     # Todo: Email validation
-    local = C(VARCHAR(64), CheckConstraint(min_size("local", 1)), nullable=False)
-    domain = C(VARCHAR(255), CheckConstraint(min_size("domain", 1)), nullable=False)
+    mailbox = C(VARCHAR(64), CheckConstraint(min_size("local", 1)), nullable=False)
+    hostname = C(VARCHAR(255), CheckConstraint(min_size("domain", 1)), nullable=False)
     verified = C(BOOL)
     verifiedts = C(DATETIME)
 
-    UniqueConstraint("local", "domain")
 
 
 class LinkUserToEmailAddresses(Base):
@@ -225,7 +234,6 @@ class RadioAnswer(Base):
     answer_id = AnswerFK(primary_key=True)
     correct = C(BOOL, nullable=False)
     value = C(NUMERIC, default=1)  # Todo: default = lambda (self): 1 if correct else 0
-    PrimaryKeyConstraint("answer_id")
 
 
 class SelectionAnswer(Base):
@@ -233,7 +241,6 @@ class SelectionAnswer(Base):
     answer_id = AnswerFK(primary_key=True)
     correct = C(BOOL, nullable=False)
     value = C(NUMERIC, default=1)
-    PrimaryKeyConstraint("answer_id")
 
 
 class OrderAnswer(Base):
@@ -241,13 +248,11 @@ class OrderAnswer(Base):
     answer_id = AnswerFK(primary_key=True)
     correct_position = C(INT, nullable=False)
     value = C(NUMERIC, default=1)  # Todo: default = lambda (self): 1 if correct else 0
-    PrimaryKeyConstraint("answer_id")
 
 
 class ShortAnswer(Base):
     __tablename__ = "answers_type_short"
     answer_id = AnswerFK(primary_key=True)
-    PrimaryKeyConstraint("answer_id")
 
 
 class CorrectShortAnswers(Base):
@@ -255,13 +260,11 @@ class CorrectShortAnswers(Base):
     answer_id = AnswerFK(primary_key=True)
     correct = C(TEXT, nullable=False)
     value = C(NUMERIC, default=1)
-    PrimaryKeyConstraint("answer_id", "correct")
 
 
 class EssayAnswer(Base):
     __tablename__ = "answers_type_essay"
     answer_id = AnswerFK(primary_key=True)
-    PrimaryKeyConstraint("answer_id")
 
 
 class QuizSession(Base):
@@ -387,9 +390,4 @@ class QSE_Student_AnswerLockedIn(Base, _qse):
     answer_id = AnswerFK(primary_key=True)
 
 
-########################################################################################
-# Functions
-def generate_room_code(length=5) -> str:
-    return "".join(
-        [random.choice("ABCDEFGHJKMNPQRSTUVWXYZ23456789") for i in range(length)]
-    )
+

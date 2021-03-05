@@ -17,3 +17,8 @@ class Role:
 class RoomDetails(ORMModel):
     code: str
     active: bool
+
+
+class UserDetails(ORMModel):
+    name: str
+    number: int

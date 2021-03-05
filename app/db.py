@@ -1,7 +1,8 @@
 import os
 
+from sqlalchemy import text
 from sqlalchemy.future import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, Session as SessionType
 
 
 def get_uri() -> str:
@@ -18,3 +19,6 @@ uri = get_uri()
 engine = create_engine(uri, echo=True)  # Show SQL Statements for development
 Base = declarative_base()
 Session = sessionmaker(autocommit=False, autoflush=True, bind=engine, future=True)
+
+
+
