@@ -2,7 +2,9 @@ version: "3.3"
 
 services:
   db:
-    image: "library/postgres:13"
+    build:
+      context: "./"
+      dockerfile: "Dockerfile.db"
     env_file:
       - ".env.dev"
 #     Ports is only open for dev
@@ -11,11 +13,12 @@ services:
     networks:
       - "tuskynet"
     volumes:
-      - "./init.sql:/docker-entrypoint-initdb.d/init.sql"
       - "tusky:/var/lib/postgresql/data"
 
   web:
-    build: "./"
+    build:
+      context: "./"
+      dockerfile: "Dockerfile.web"
     env_file:
       - ".env.dev"
     volumes:
