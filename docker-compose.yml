@@ -5,9 +5,11 @@ services:
     image: "library/postgres:13"
     env_file:
       - ".env.dev"
-    # Ports is only open for dev
-    ports:
-    - "5432:5432"
+#     Ports is only open for dev
+#    ports:
+#    - "5432:5432"
+    networks:
+      - "tuskynet"
     volumes:
       - "./init.sql:/docker-entrypoint-initdb.d/init.sql"
       - "tusky:/var/lib/postgresql/data"
@@ -18,6 +20,10 @@ services:
       - ".env.dev"
     volumes:
     - "./:/src"
+    networks:
+      - "tuskynet"
+    links:
+      - "db:db"
     ports:
     - "8000:8000"
     depends_on:
@@ -25,3 +31,7 @@ services:
 
 volumes:
   tusky:
+
+networks:
+  tuskynet:
+    driver: "bridge"
