@@ -106,6 +106,4 @@ dmypy.json
 # Project specific stuff
 workspace*
 *.prod
-# Todo: Make dev version without data
-init.sql
 ./services/db/init.sql
