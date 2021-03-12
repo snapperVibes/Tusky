@@ -4,7 +4,7 @@ services:
   db:
     build:
       context: "./"
-      dockerfile: "Dockerfile.db"
+      dockerfile: "scripts/Dockerfile.db"
     env_file:
       - ".env.dev"
 #     Ports is only open for dev
@@ -18,7 +18,7 @@ services:
   web:
     build:
       context: "./"
-      dockerfile: "Dockerfile.web"
+      dockerfile: "scripts/Dockerfile.web"
     env_file:
       - ".env.dev"
     volumes:
