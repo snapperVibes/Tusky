@@ -2,8 +2,6 @@ import secrets
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Union
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from pydantic import BaseSettings, AnyHttpUrl, validator, EmailStr, PostgresDsn, HttpUrl
 from jose import jwt
@@ -108,11 +106,11 @@ class Security:
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_jwt
 
+    def hash_password(self, password: str) -> str:
+        return self.pwd_context.hash(password)
+
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return self.pwd_context.verify(plain_password, hashed_password)
-
-    def get_password_hash(self, password: str) -> str:
-        return self.pwd_context.hash(password)
 
 
 settings = Settings()
