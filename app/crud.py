@@ -1,20 +1,22 @@
+__all__ = ["user"]
+
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from result import Ok, Err, Result
+from sqlalchemy import desc
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
 
 from app.core import security
-from app.database import Base
-from app.exceptions import Result, UserDoesNotExist, IncorrectPassword
-from app.models import User
+from app.exceptions import UserDoesNotExist, IncorrectPassword
+from app.models import Base, User
 from app.schemas import UserCreate, UserUpdate
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
-
 
 
 class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
@@ -46,11 +48,11 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db.query(self.model).offset(skip).limit(limit).all()
 
     def update(
-            self,
-            db: Session,
-            *,
-            db_obj: ModelType,
-            obj_init: Union[UpdateSchemaType, Dict[str, Any]]
+        self,
+        db: Session,
+        *,
+        db_obj: ModelType,
+        obj_init: Union[UpdateSchemaType, Dict[str, Any]]
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
         if isinstance(obj_init, dict):
@@ -80,24 +82,37 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
             hashed_password=security.hash_password(obj_init.password),
             is_superuser=obj_init.is_superuser,
         )
+        # Todo: This is a rough implementation. Adhere to best practices so we don't hit the db unnecessarily
+        # Generate user number
+        # Superusers can set their own number, normal users just get the next number
+        if db_obj.is_superuser and (obj_init.number is not None):
+            db_obj.number = obj_init.number
+        else:
+            q = (
+                db.query(User.number)
+                .filter_by(name=obj_init.name)
+                .order_by(desc("number"))
+                .first()
+            )
+            db_obj.number = int(q.number) + 1 if q is not None else 1
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
 
-    def get_by_name_and_number(self, db: Session, *, name: str, number: str):
-        return db.query(User).filter(User.name == name, User.number == number)
+    def get_by_name_and_number(self, db: Session, *, name: str, number: int) -> User:
+        return db.query(User).filter(User.name == name, User.number == number).one()
 
-    def authenticate(self, db: Session, *, username: str, number: str, password: str) -> Result[Optional[User], Optional[Union[UserDoesNotExist, IncorrectPassword]]]:
-        err = None
+    def authenticate(
+        self, db: Session, *, username: str, number: str, password: str
+    ) -> Result[User, Union[UserDoesNotExist, IncorrectPassword]]:
+        # Todo: Make splitting name and number a method. Does it belong in schema?
         user = self.get_by_name_and_number(db, name=username, number=number)
         if not user:
-            err = UserDoesNotExist(username, number)
-            return Result(None, err)
+            return Err(UserDoesNotExist(username, number))
         if not security.verify_password(password, user.hashed_password):
-            err = IncorrectPassword(username, number)
-            return Result(None, err)
-        return Result(user, None)
+            return Err(IncorrectPassword(username, number))
+        return Ok(user)
 
     # Todo: Figure out point of method. It's in the cookiecutter so there has to be a point, right?
     def is_active(self, user: User) -> bool:
@@ -106,3 +121,5 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
     def is_superuser(selfself, user: User) -> bool:
         return user.is_superuser
 
+
+user = CRUDUser(User)

@@ -1,4 +1,6 @@
 #! /usr/bin/env bash
+trap "docker-compose down -v --remove-orphans" EXIT
+
 
 # Exit in case of error
 set -e
@@ -12,5 +14,6 @@ fi
 
 docker-compose build
 docker-compose up -d
-docker-compose exec -T web bash /app/tests-start.sh "$@"
-docker-compose down
+# This is really ugly, use _wait_for_it.sh
+./scripts/_wait_for_it.sh -t 8 localhost:8000
+docker-compose exec -T web bash /src/scripts/_tests_start.sh "$@"

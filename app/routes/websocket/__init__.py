@@ -1,1 +1,3 @@
-ws_router = None
+from fastapi import APIRouter
+
+ws_router = APIRouter()
