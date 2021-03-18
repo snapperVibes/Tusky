@@ -1,1 +1,3 @@
-view_router = None
+from fastapi import APIRouter
+
+view_router = APIRouter()

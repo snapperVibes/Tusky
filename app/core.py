@@ -1,10 +1,23 @@
 import secrets
+import warnings
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Union
 
 from passlib.context import CryptContext
 from pydantic import BaseSettings, AnyHttpUrl, validator, EmailStr, PostgresDsn, HttpUrl
-from jose import jwt
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore", message=r"int_from_bytes is deprecated, use int\.from_bytes instead"
+    )
+    from jose import jwt
+
+
+# # Todo: Figure out why these two lines are needed.
+# #  It is directly related to CMD ["python" "manage.py" "initdb"] in Dockerfile.web
+# import dotenv
+#
+# dotenv.load_dotenv("./.env.dev")
 
 
 class Settings(BaseSettings):
@@ -13,7 +26,7 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     SERVER_NAME: str
-    SERVER_HOST: AnyHttpUrl
+    # todo: SERVER_HOST: AnyHttpUrl
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
     # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
     # "http://localhost:8080", "http://local.dockertoolbox.tiangolo.com"]'
@@ -80,8 +93,8 @@ class Settings(BaseSettings):
             and values.get("EMAILS_FROM_EMAIL")
         )
 
-    EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
-    FIRST_SUPERUSER: EmailStr
+    TEST_USER_NAME: str = "test_account"  # type: ignore
+    FIRST_SUPERUSER: str = "admin"  # type: ignore
     FIRST_SUPERUSER_PASSWORD: str
     USERS_OPEN_REGISTRATION: bool = False
 
@@ -94,7 +107,7 @@ class Security:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     def create_access_token(
-            self, subject: Union[str, Any], expires_delta: timedelta = None
+        self, subject: Union[str, Any], expires_delta: timedelta = None
     ) -> str:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
@@ -103,7 +116,9 @@ class Security:
                 minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
             )
         to_encode = {"exp": expire, "sub": str(subject)}
-        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=self.ALGORITHM)
+        encoded_jwt = jwt.encode(
+            to_encode, settings.SECRET_KEY, algorithm=self.ALGORITHM
+        )
         return encoded_jwt
 
     def hash_password(self, password: str) -> str:

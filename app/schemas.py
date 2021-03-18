@@ -1,7 +1,7 @@
 from typing import Optional, Any
 
-from pydantic import BaseModel, EmailStr
-from sqlalchemy.dialects.postgresql import UUID
+from pydantic import BaseModel, EmailStr, validator
+from uuid import UUID
 
 
 # # Template
@@ -45,8 +45,28 @@ class TokenPayload(BaseModel):
 ########################################################################################
 class _UserBase(BaseModel):
     name: str
+    number: Optional[int] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
+
+    @validator("name")
+    def name_length_between_1_and_32_characters(cls, v):
+        if not 1 <= len(v) <= 32:
+            raise ValueError("Name length must be between 1 and 32 characters")
+        return v
+
+    @validator("name")
+    def name_does_not_contain_hash_symbol(cls, v):
+        if "#" in v:
+            raise ValueError("Name must not contain the hash symbol '#")
+        return v
+
+    @validator("number")
+    def display_number(cls, v):
+        # if int(v) < 1:
+        #     raise ValueError("Number must be greater than or equal to one.")
+        # 51 -> "0051", 10245 -> "10245"
+        return str(v).zfill(4)
 
 
 class UserCreate(_UserBase):
@@ -54,13 +74,13 @@ class UserCreate(_UserBase):
 
 
 class UserUpdate(_UserBase):
-    number: str  # Todo: Type: UserNumber
-    password: Optional[str] = None
+    number: int  # Todo: Type: UserNumber
+    password: Optional[int] = None
 
 
 class _UserInDBBase(_UserBase):
     id: Optional[UUID] = None
-    number: str
+    number: int
 
     class Config:
         orm_mode = True

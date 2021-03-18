@@ -1,3 +1,6 @@
+# pyrpoject.toml sepcifies the build system requirements for python projects
+# https://www.python.org/dev/peps/pep-0518/
+
 [tool.poetry]
 name = "tusky"
 version = "0.1.0"
@@ -12,10 +15,15 @@ pydantic = {extras = ["email", "dotenv"], version = "^1.8.1"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 uvicorn = "^0.13.4"
 aiofiles = "^0.6.0"
-python-jose = {extras = ["cryptography"], version = "^3.1.0"}
+python-jose = {extras = ["cryptography"], version = "^3.2.0"}
+psycopg2-binary = "^2.8.6"
+result = {git = "https://github.com/dbrgn/result.git"}
+python-multipart = "^0.0.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
+tenacity = "^7.0.0"
+requests = "^2.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -7,18 +7,26 @@ services:
       dockerfile: "scripts/Dockerfile.db"
     env_file:
       - ".env.dev"
-#     Ports is only open for dev
-#    ports:
-#    - "5432:5432"
+    # Ports are only open for dev
+    ports:
+    - "5435:5432"
     networks:
       - "tuskynet"
     volumes:
       - "tusky:/var/lib/postgresql/data"
 
   web:
+
     build:
       context: "./"
       dockerfile: "scripts/Dockerfile.web"
+      args:
+        # Todo: Figure out how to use arguments
+        INSTALL_DEV: ${INSTALL_DEV-true}
+#    environment:
+#      - SERVER_NAME=${DOMAIN}
+#      - SERVER_HOST=https://${DOMAIN}
+#      - SMTP_HOST=${SMTP_HOST}
     env_file:
       - ".env.dev"
     volumes:
