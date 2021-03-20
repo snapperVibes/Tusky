@@ -14,6 +14,7 @@ from app.routes import _depends as deps
 
 login_router = APIRouter()
 
+
 @login_router.post("/login/access-token", response_model=schemas.Token)
 def login_access_token(
     db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
@@ -48,6 +49,7 @@ rooms_router = APIRouter()
 #######################################################################################
 # users
 users_router = APIRouter()
+
 
 @users_router.post("/create", response_model=schemas.User)
 def create_user(
