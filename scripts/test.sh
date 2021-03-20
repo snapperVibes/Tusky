@@ -14,6 +14,4 @@ fi
 
 docker-compose build
 docker-compose up -d
-# This is really ugly, use _wait_for_it.sh
-./scripts/_wait_for_it.sh -t 8 localhost:8000
 docker-compose exec -T web bash /src/scripts/_tests_start.sh "$@"
