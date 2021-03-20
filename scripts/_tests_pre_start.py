@@ -9,7 +9,7 @@ from app.database import SessionLocal
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-max_tries = 60 * 5  # 5 minutes
+max_tries = 15
 wait_seconds = 1
 
 
@@ -22,7 +22,10 @@ wait_seconds = 1
 def wait_for_database_to_be_setup() -> None:
     try:
         db = SessionLocal()
-        crud.user.get_by_name_and_number(db, name=settings.FIRST_SUPERUSER, number=0)
+        admin = crud.user.get_by_name_and_number(db, name=settings.FIRST_SUPERUSER, number=0)
+        if err := admin.err():
+            raise err
+        return
     except Exception as e:
         logger.error(e)
         raise e

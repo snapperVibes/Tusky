@@ -40,7 +40,7 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def get(self, db: Session, id: Any) -> Optional[ModelType]:
-        return db.query(self.model).filter(self.model.id == id).first
+        return db.query(self.model).filter(self.model.id == id).first()
 
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100
@@ -100,16 +100,21 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(db_obj)
         return db_obj
 
-    def get_by_name_and_number(self, db: Session, *, name: str, number: int) -> User:
-        return db.query(User).filter(User.name == name, User.number == number).one()
+    def get_by_name_and_number(self, db: Session, *, name: str, number: int) -> Result[User, UserDoesNotExist]:
+        user = db.query(User).filter(User.name == name, User.number == number).one_or_none()
+        if user is None:
+            return Err(UserDoesNotExist)
+        return Ok(user)
 
     def authenticate(
-        self, db: Session, *, username: str, number: str, password: str
+        self, db: Session, *, username: str, number: int, password: str
     ) -> Result[User, Union[UserDoesNotExist, IncorrectPassword]]:
         # Todo: Make splitting name and number a method. Does it belong in schema?
-        user = self.get_by_name_and_number(db, name=username, number=number)
-        if not user:
-            return Err(UserDoesNotExist(username, number))
+        user_result = self.get_by_name_and_number(db, name=username, number=number)
+        if user := user_result.ok():
+            pass
+        else:   # Propagate error
+            return user_result.err()
         if not security.verify_password(password, user.hashed_password):
             return Err(IncorrectPassword(username, number))
         return Ok(user)
