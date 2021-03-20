@@ -1,6 +1,7 @@
 # pyrpoject.toml sepcifies the build system requirements for python projects
 # https://www.python.org/dev/peps/pep-0518/
 
+# Poetry is a python dependancy management tool, similar to pip
 [tool.poetry]
 name = "tusky"
 version = "0.1.0"
@@ -24,6 +25,7 @@ python-multipart = "^0.0.5"
 pytest = "^6.2.2"
 tenacity = "^7.0.0"
 requests = "^2.25.1"
+flake8 = "^3.9.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

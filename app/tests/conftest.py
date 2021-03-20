@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app import init_app, crud
 from app.core import settings
 from app.database import SessionLocal
+from app.exceptions import UserDoesNotExist
 from app.schemas import UserCreate
 from app.tests.utils import random_string
 
@@ -37,14 +38,16 @@ def superuser_token_headers(client: TestClient) -> Dict[str, str]:
 
 @pytest.fixture(scope="module")
 def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]:
-    name, number = settings.TEST_USER_NAME.split("#")
+    name, number = settings.TEST_USER_NAME, 1
     user = crud.user.get_by_name_and_number(db, name=name, number=number)
-    # if not user:
-    #     user_init_create = UserCreate(
-    #         name=settings.TEST_USER_NAME,
-    #         password=random_string()
-    #     )
-    #     user = crud.user.create(db, obj_init=user_init_create)
+    if user.ok():
+        user = user.unwrap()
+    elif user.err() == UserDoesNotExist:
+        user_init_create = UserCreate(
+            name=settings.TEST_USER_NAME,
+            password=random_string()
+        )
+        user = crud.user.create(db, obj_init=user_init_create)
     return user_authentication_headers(
         client=client, name=user.name, number=user.number
     )

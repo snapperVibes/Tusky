@@ -29,6 +29,10 @@ services:
 #      - SMTP_HOST=${SMTP_HOST}
     env_file:
       - ".env.dev"
+    environment:
+      # Adding /src to PYTHONPATH _tests_pre_start.py to access app
+      # If PYTHONPATH existed, we'd just append to the path like "PYTHONPATH=${PYTHONPATH}:/src"
+      - "PYTHONPATH=/src"
     volumes:
     - "./:/src"
     networks:
