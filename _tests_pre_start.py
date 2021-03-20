@@ -2,6 +2,8 @@ import logging
 
 from tenacity import after_log, before_log, retry, stop_after_attempt, wait_fixed
 
+from app.core import settings
+from app import crud
 from app.database import SessionLocal
 
 logging.basicConfig(level=logging.INFO)
@@ -17,11 +19,10 @@ wait_seconds = 1
     before=before_log(logger, logging.INFO),
     after=after_log(logger, logging.WARN),
 )
-def init() -> None:
+def wait_for_database_to_be_setup() -> None:
     try:
-        # Try to create session to check if DB is awake
         db = SessionLocal()
-        db.execute("SELECT 1")
+        crud.user.get_by_name_and_number(db, name=settings.FIRST_SUPERUSER, number=0)
     except Exception as e:
         logger.error(e)
         raise e
@@ -29,5 +30,5 @@ def init() -> None:
 
 if __name__ == "__main__":
     logger.info("Initializing service")
-    init()
+    wait_for_database_to_be_setup()
     logger.info("Service finished initializing")

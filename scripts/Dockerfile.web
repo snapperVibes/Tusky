@@ -22,6 +22,4 @@ RUN bash -c "if [ $INSTALL_DEV == 'true' ] ; then poetry install --no-root ; els
 COPY . .
 # Wait for it uses CMD to not create a new layer
 # Todo: Is this working?
-CMD ["scripts/_wait_for_it.sh", "db:5432"]
-#ENTRYPOINT python manage.py runserver
-CMD ["python", "manage.py", "runserver"]
+CMD ["scripts/_wait_for_it.sh", "db:5432", "--", "python", "manage.py", "runserver"]
