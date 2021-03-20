@@ -3,8 +3,6 @@ from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.schema import (
     Column as C,
     CheckConstraint,
-    ForeignKey as FK,
-    PrimaryKeyConstraint,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID

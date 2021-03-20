@@ -1,6 +1,3 @@
-from typing import Any, Generic, TypeVar, Union
-
-
 class TuskyError(BaseException):
     """
     Base Exception for the Tusky application.

@@ -2,9 +2,7 @@ from typing import Dict
 
 from fastapi.testclient import TestClient
 
-from app import crud
 from app.core import settings
-from app.tests.utils import random_string
 
 
 def test_get_users_superuser_me(

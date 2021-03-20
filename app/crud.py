@@ -52,7 +52,7 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db: Session,
         *,
         db_obj: ModelType,
-        obj_init: Union[UpdateSchemaType, Dict[str, Any]]
+        obj_init: Union[UpdateSchemaType, Dict[str, Any]],
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
         if isinstance(obj_init, dict):
@@ -100,8 +100,14 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(db_obj)
         return db_obj
 
-    def get_by_name_and_number(self, db: Session, *, name: str, number: int) -> Result[User, UserDoesNotExist]:
-        user = db.query(User).filter(User.name == name, User.number == number).one_or_none()
+    def get_by_name_and_number(
+        self, db: Session, *, name: str, number: int
+    ) -> Result[User, UserDoesNotExist]:
+        user = (
+            db.query(User)
+            .filter(User.name == name, User.number == number)
+            .one_or_none()
+        )
         if user is None:
             return Err(UserDoesNotExist)
         return Ok(user)
@@ -113,7 +119,7 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         user_result = self.get_by_name_and_number(db, name=username, number=number)
         if user := user_result.ok():
             pass
-        else:   # Propagate error
+        else:  # Propagate error
             return user_result.err()
         if not security.verify_password(password, user.hashed_password):
             return Err(IncorrectPassword(username, number))
