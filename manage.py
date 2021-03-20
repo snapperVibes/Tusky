@@ -2,7 +2,8 @@
 import click
 import uvicorn
 
-from app import create_all, drop_all, init_app
+from app import create_all, drop_all
+
 
 @click.group()
 def cli():
@@ -37,7 +38,6 @@ def runserver():
     """ Initializes and starts a development server"""
     create_all()
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
 
 
 cli.add_command(initdb)
