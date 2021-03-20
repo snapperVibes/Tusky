@@ -68,3 +68,8 @@ class User(Base):
     hashed_password = C(TEXT, nullable=False)
     is_superuser = C(BOOL, default=False, nullable=False)
     is_active = C(BOOL, default=True)
+
+    @property
+    def name_and_number(self):
+        # User(name="foo", number=255) -> "foo#0255"
+        return self.name + "#" + str(self.number).zfill(4)
