@@ -11,6 +11,7 @@ authors = ["Snapper <learningwithsnapper@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 fastapi = "^0.63.0"
+# SQLAlchemy 1.4 is a transition release before features are deprecated in 2.0
 SQLAlchemy = "1.4.0b3"
 pydantic = {extras = ["email", "dotenv"], version = "^1.8.1"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
@@ -18,14 +19,17 @@ uvicorn = "^0.13.4"
 aiofiles = "^0.6.0"
 python-jose = {extras = ["cryptography"], version = "^3.2.0"}
 psycopg2-binary = "^2.8.6"
-result = {git = "https://github.com/dbrgn/result.git"}
 python-multipart = "^0.0.5"
+# This library had major breaking changes between 0.5 and 0.6,
+#  so it feels safer to specify the version explictly.
+result = "0.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
 tenacity = "^7.0.0"
 requests = "^2.25.1"
 flake8 = "^3.9.0"
+pre-commit = "^2.11.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

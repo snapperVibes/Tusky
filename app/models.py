@@ -1,3 +1,9 @@
+import inspect
+from typing import NamedTuple, Callable
+
+# import plpy_man  # PlPython Manager
+# from plpy_man.mocks import GD, TD
+from sqlalchemy import DDL, event, func
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.schema import (
@@ -55,12 +61,21 @@ def TS(**kw):
 
 #######################################################################################
 class User(Base):
-    __table_args__ = (UniqueConstraint("name", "number"),)
+    # Todo: as it stands, one can get someone else's number
+    #  if the person with the highest number deletes their account
+    __table_args__ = (UniqueConstraint("identifier_name", "number"),)
     id = ID()
     ts = TS()
-    name = C(
+    # We're lucky Postgres13 is out,
+    #  otherwise we'd have to write our own PLPython3U solution :P
+    display_name = C(
         VARCHAR(32),
-        CheckConstraint(min_size("name", 1)),
+        CheckConstraint(min_size("display_name", 1)),
+        nullable=False,
+    )
+    identifier_name = C(
+        VARCHAR(32),
+        CheckConstraint(min_size("identifier_name", 1)),
         nullable=False,
     )
     # Todo: Number validation
@@ -72,4 +87,4 @@ class User(Base):
     @property
     def name_and_number(self):
         # User(name="foo", number=255) -> "foo#0255"
-        return self.name + "#" + str(self.number).zfill(4)
+        return self.display_name + "#" + str(self.number).zfill(4)
