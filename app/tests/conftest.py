@@ -43,7 +43,7 @@ def client() -> Generator:
 def superuser_token_headers(client: TestClient) -> Dict[str, str]:
     return get_user_authentication_headers(
         client=client,
-        name_and_number=settings.FIRST_SUPERUSER + "#0000",
+        name_and_number=settings.FIRST_SUPERUSER + "#0001",
         password=settings.FIRST_SUPERUSER_PASSWORD,
     )
 
@@ -55,7 +55,9 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
     If the user doesn't exist, the user is first created.
     """
     password = random_string()
-    user_init = schemas.UserCreate(name=settings.TEST_USER_NAME, password=password)
+    user_init = schemas.UserCreate(
+        display_name=settings.TEST_USER_NAME, password=password
+    )
     user = crud.user.create(db, obj_init=user_init)
     return get_user_authentication_headers(
         client=client, name_and_number=user.name_and_number, password=password

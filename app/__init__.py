@@ -34,15 +34,15 @@ _HERE = path.dirname(path.realpath(__file__))
 def create_all(**kw) -> bool:
     # Create the tables
     Base.metadata.create_all(engine, **kw)
+    db = SessionLocal()
     # Add the super user
     super_user = schemas.UserCreate(
-        name=settings.FIRST_SUPERUSER,
+        display_name=settings.FIRST_SUPERUSER,
         password=settings.FIRST_SUPERUSER_PASSWORD,
-        number=0,
         is_superuser=True,
     )
     try:
-        crud.user.create(SessionLocal(), obj_init=super_user)
+        crud.user.create(db, obj_init=super_user)
     except IntegrityError:
         return False
     return True

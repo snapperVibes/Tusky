@@ -5,6 +5,6 @@ from app.core import settings
 
 
 engine = create_engine(
-    settings.SQLALCHEMY_DATABASE_URI, pool_pre_ping=True, future=True, echo=True
+    settings.SQLALCHEMY_DATABASE_URI, pool_pre_ping=True, future=True
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

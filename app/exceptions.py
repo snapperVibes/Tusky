@@ -16,12 +16,6 @@ class AuthenticationError(TuskyError):
 class UserDoesNotExist(AuthenticationError):
     """ Exception raised when user not found in database """
 
-    def __init__(self, username, number):
-        pass
-
 
 class IncorrectPassword(AuthenticationError):
     """ Exception raised when a user's password does not match """
-
-    def __init__(self, username, number):
-        pass

@@ -1,6 +1,7 @@
 __all__ = ["settings", "security"]
 
 import secrets
+import unicodedata
 import warnings
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Union
@@ -128,6 +129,18 @@ class Security:
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return self.pwd_context.verify(plain_password, hashed_password)
+
+    def to_identifier(self, text: str) -> str:
+        """ Normalizes utf-8 strings using normalization form KD and lowercase characters """
+        # https://unicode.org/reports/tr15/
+        #   For each character, there are two normal forms: normal form C and normal form D.
+        #   Normal form D (NFD) is also known as canonical decomposition,
+        #   and translates each character into its decomposed form.
+        #   Normal form C (NFC) first applies a canonical decomposition,
+        #   then composes pre-combined characters again...
+        #   The normal form KD (NFKD) will apply the compatibility decomposition,
+        #   i.e. replace all compatibility characters with their equivalents.
+        return unicodedata.normalize("NFKD", text).lower()
 
 
 settings = Settings()

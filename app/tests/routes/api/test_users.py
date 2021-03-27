@@ -18,7 +18,7 @@ def test_get_users_superuser_me(
     assert current_user
     assert current_user["is_active"] is True
     assert current_user["is_superuser"]
-    assert current_user["name"] == settings.FIRST_SUPERUSER
+    assert current_user["display_name"] == settings.FIRST_SUPERUSER
 
 
 def test_get_users_normal_user_me(
@@ -29,7 +29,7 @@ def test_get_users_normal_user_me(
     assert current_user
     assert current_user["is_active"] is True
     assert current_user["is_superuser"] is False
-    assert current_user["name"] == settings.TEST_USER_NAME
+    assert current_user["display_name"] == settings.TEST_USER_NAME
 
 
 def test_unique_numbers(client: TestClient, superuser_token_headers: dict, db: Session):
@@ -39,11 +39,11 @@ def test_unique_numbers(client: TestClient, superuser_token_headers: dict, db: S
         f"{settings.API_V1_STR}/users/create",
         headers=superuser_token_headers,
     )
-    user1_init = schemas.UserCreate(name="dave", password="insecurE&123")
-    user2_init = schemas.UserCreate(name="dave", password="insecurE&123")
-    user3_init = schemas.UserCreate(name="dave", password="differeNt&456")
-    user4_init = schemas.UserCreate(name="Dave", password="insecurE&123")
-    user5_init = schemas.UserCreate(name="Dave", password="differeNt&456")
+    user1_init = schemas.UserCreate(display_name="dave", password="insecurE&123")
+    user2_init = schemas.UserCreate(display_name="dave", password="insecurE&123")
+    user3_init = schemas.UserCreate(display_name="dave", password="differeNt&456")
+    user4_init = schemas.UserCreate(display_name="Dave", password="insecurE&123")
+    user5_init = schemas.UserCreate(display_name="Dave", password="differeNt&456")
     r1 = _post(json=user1_init.dict())
     r2 = _post(json=user2_init.dict())
     r3 = _post(json=user3_init.dict())
@@ -55,7 +55,8 @@ def test_unique_numbers(client: TestClient, superuser_token_headers: dict, db: S
     u4 = r4.json()
     u5 = r5.json()
     print(u1)
-    assert u1["name"] == u2["name"] == u3["name"] == "dave"
-    assert u4["name"] == u5["name"] == "Dave"
+    assert u1["display_name"] == u2["display_name"] == u3["display_name"] == "dave"
+    assert u4["display_name"] == u5["display_name"] == "Dave"
     users = [u1, u2, u3, u4, u5]
     assert len(set(u["number"] for u in users)) == len(users)
+    assert [u["identifier_name"] == "dave" for u in users]
