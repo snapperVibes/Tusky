@@ -20,7 +20,7 @@ from os import path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import InternalError
 
 from app import crud, schemas
 from app.core import settings, security
@@ -43,7 +43,7 @@ def create_all(**kw) -> bool:
     )
     try:
         crud.user.create(db, obj_init=super_user)
-    except IntegrityError:
+    except InternalError:
         return False
     return True
 

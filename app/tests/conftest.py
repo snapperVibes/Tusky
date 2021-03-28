@@ -43,7 +43,7 @@ def client() -> Generator:
 def superuser_token_headers(client: TestClient) -> Dict[str, str]:
     return get_user_authentication_headers(
         client=client,
-        name_and_number=settings.FIRST_SUPERUSER + "#0001",
+        name_and_number=settings.FIRST_SUPERUSER + "#0000",
         password=settings.FIRST_SUPERUSER_PASSWORD,
     )
 
