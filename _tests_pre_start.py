@@ -30,7 +30,7 @@ def wait_for_database_to_be_setup() -> None:
         admin = crud.user.get_by_name_and_number(
             db,
             name=settings.FIRST_SUPERUSER,
-            number=1,
+            number=0,
         )
         if err := admin.err():
             raise err

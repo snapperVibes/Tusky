@@ -134,10 +134,15 @@ CREATE FUNCTION _to_identifier_func() RETURNS TRIGGER AS $$
     disp_name = TD["new"]["display_name"]
     id_name = unicodedata.normalize("NFKD", disp_name).lower()
     TD["new"]["identifier_name"] = id_name
-    if id_name == "admin":
+    if id_name.__contains__("admin"):
         count_row = plpy.execute("SELECT count(display_name) FROM public.user WHERE display_name='admin';")
         if count_row[0]['count'] > 0:
             raise ValueError("Name cannot be admin.")
+        TD["new"]["number"] = 0
+    if id_name.__contains__("#"):
+        raise ValueError("The normalized name cannot contain the has symbol")
+    if len(id_name) > 32:
+        raise ValueError("The normalized name cannot be longer than 32 characters")
     return "MODIFY"
 $$ LANGUAGE PLPYTHON3U;"""
 )

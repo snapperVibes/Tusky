@@ -19,6 +19,7 @@ def test_get_users_superuser_me(
     assert current_user["is_active"] is True
     assert current_user["is_superuser"]
     assert current_user["display_name"] == settings.FIRST_SUPERUSER
+    assert current_user["number"] == "0000"
 
 
 def test_get_users_normal_user_me(

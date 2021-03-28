@@ -97,7 +97,7 @@ class Settings(BaseSettings):
         )
 
     TEST_USER_NAME: str = "test_account"  # type: ignore
-    FIRST_SUPERUSER: str = "admin"  # type: ignore
+    FIRST_SUPERUSER: str = "Admin"  # type: ignore
     FIRST_SUPERUSER_PASSWORD: str
     USERS_OPEN_REGISTRATION: bool = False
 
