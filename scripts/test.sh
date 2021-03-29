@@ -12,6 +12,6 @@ if [ $(uname -s) = "Linux" ]; then
     sudo find . -type d -name __pycache__ -exec rm -r {} \+
 fi
 
-docker-compose build
+docker-compose build --build-arg INSTALL_DEV=true
 docker-compose up -d
-docker-compose exec -T web bash /src/scripts/_tests_start.sh "$@"
+docker-compose exec -T backend bash /src/_tests_start.sh "$@"

@@ -3,8 +3,8 @@ version: "3.3"
 services:
   db:
     build:
-      context: "./"
-      dockerfile: "scripts/Dockerfile.db"
+      context: "./backend"
+      dockerfile: "db.dockerfile"
     env_file:
       - ".env.dev"
     # Ports are only open for dev
@@ -15,14 +15,10 @@ services:
     volumes:
       - "tusky:/var/lib/postgresql/data"
 
-  web:
-
+  backend:
     build:
-      context: "./"
-      dockerfile: "scripts/Dockerfile.web"
-      args:
-        # Todo: Figure out how to use arguments
-        INSTALL_DEV: ${INSTALL_DEV-true}
+      context: ./backend
+      dockerfile: backend.dockerfile
 #    environment:
 #      - SERVER_NAME=${DOMAIN}
 #      - SERVER_HOST=https://${DOMAIN}
@@ -30,15 +26,38 @@ services:
     env_file:
       - ".env.dev"
     volumes:
-    - "./:/src"
+    - "./backend/:/src"
     networks:
       - "tuskynet"
     links:
       - "db:db"
-    ports:
-    - "8000:8000"
     depends_on:
       - "db"
+    command: "./_wait_for_it.sh -q db:5432 -- python manage.py runserver"
+
+#  web:
+#    build:
+#      context: "./"
+#      dockerfile: "scripts/backend.dockerfile"
+#      args:
+#        # Todo: Figure out how to use arguments
+#        INSTALL_DEV: ${INSTALL_DEV-true}
+##    environment:
+##      - SERVER_NAME=${DOMAIN}
+##      - SERVER_HOST=https://${DOMAIN}
+##      - SMTP_HOST=${SMTP_HOST}
+#    env_file:
+#      - ".env.dev"
+#    volumes:
+#    - "./:/src"
+#    networks:
+#      - "tuskynet"
+#    links:
+#      - "db:db"
+#    ports:
+#    - "8000:8000"
+#    depends_on:
+#      - "db"
 
 volumes:
   tusky:

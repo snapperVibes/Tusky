@@ -17,7 +17,7 @@ with warnings.catch_warnings():
 
 
 # # Todo: Figure out why these two lines are needed.
-# #  It is directly related to CMD ["python" "manage.py" "initdb"] in Dockerfile.web
+# #  It is directly related to CMD ["python" "manage.py" "initdb"] in backend.dockerfile
 # import dotenv
 #
 # dotenv.load_dotenv("./.env.dev")
