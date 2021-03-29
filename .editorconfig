@@ -12,11 +12,16 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 
+[*.html]
+indent_size = 2
+
+[*.css]
+indent_size = 2
+
 [*.md]
 # double whitespace at end of line
 # denotes a line break in Markdown
 trim_trailing_whitespace = false
-
 
 [*.yml]
 indent_size = 2

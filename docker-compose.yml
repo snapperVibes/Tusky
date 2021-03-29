@@ -34,30 +34,9 @@ services:
     depends_on:
       - "db"
     command: "./_wait_for_it.sh -q db:5432 -- python manage.py runserver"
+    ports:
+      - "8000:8000"
 
-#  web:
-#    build:
-#      context: "./"
-#      dockerfile: "scripts/backend.dockerfile"
-#      args:
-#        # Todo: Figure out how to use arguments
-#        INSTALL_DEV: ${INSTALL_DEV-true}
-##    environment:
-##      - SERVER_NAME=${DOMAIN}
-##      - SERVER_HOST=https://${DOMAIN}
-##      - SMTP_HOST=${SMTP_HOST}
-#    env_file:
-#      - ".env.dev"
-#    volumes:
-#    - "./:/src"
-#    networks:
-#      - "tuskynet"
-#    links:
-#      - "db:db"
-#    ports:
-#    - "8000:8000"
-#    depends_on:
-#      - "db"
 
 volumes:
   tusky:

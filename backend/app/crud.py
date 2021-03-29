@@ -193,5 +193,3 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
 
 
 quiz = CRUDQuiz(Quiz)
-
-

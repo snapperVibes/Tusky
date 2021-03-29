@@ -144,6 +144,7 @@ class Quiz(_QuizInDBBase):
 class QuizInDB(_QuizInDBBase):
     pass
 
+
 ########################################################################################
 class _QuestionBase(BaseModel):
     name: str

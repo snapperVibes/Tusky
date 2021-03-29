@@ -31,4 +31,3 @@ def create_all(**kw) -> bool:
 
 def drop_all(**kw):
     Base.metadata.drop_all(engine, **kw)
-

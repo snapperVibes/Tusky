@@ -15,6 +15,11 @@ from app.routes import _depends as deps
 login_router = APIRouter()
 
 
+@login_router.get("/")
+def home():
+    return {"msg": "Welcome to Tusky's API 🐘."}
+
+
 @login_router.post("/login/access-token", response_model=schemas.Token)
 def login_access_token(
     db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
@@ -56,7 +61,7 @@ def create_user(
     *,
     db: Session = Depends(deps.get_db),
     user_init: schemas.UserCreate,
-    current_user: models.User = Depends(deps.get_current_active_superuser)
+    current_user: models.User = Depends(deps.get_current_active_superuser),
 ):
     return crud.user.create(db, obj_init=user_init)
 
@@ -82,7 +87,7 @@ def create_quiz(
     *,
     db: Session = Depends(deps.get_db),
     obj_init: schemas.QuizCreate,
-    current_user: models.User = Depends(deps.get_current_active_user)
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     return crud.quiz.create(db, obj_init=obj_init)
 
@@ -97,18 +102,9 @@ def create_question(
     crud.question.create(db, obj_init=obj_init)
 
 
-
-
-
 #######################################################################################
 api_router = APIRouter()
-api_router.include_router(login_router, prefix=settings.API_V1_STR, tags=["login"])
-api_router.include_router(
-    users_router, prefix=settings.API_V1_STR + "/users", tags=["users"]
-)
-api_router.include_router(
-    rooms_router, prefix=settings.API_V1_STR + "/rooms", tags=["rooms"]
-)
-api_router.include_router(
-    quiz_router, tags=["quizzes"]
-)
+api_router.include_router(login_router, tags=["login"])
+api_router.include_router(users_router, prefix="/users", tags=["users"])
+api_router.include_router(rooms_router, prefix="/rooms", tags=["rooms"])
+api_router.include_router(quiz_router, tags=["quizzes"])
