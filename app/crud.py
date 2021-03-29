@@ -5,17 +5,14 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from result import Ok, Err, Result
-from sqlalchemy import desc, DDL, event
+from sqlalchemy import DDL, event
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from tenacity import retry, stop_after_attempt
 
-from app import models
 from app.core import security
 from app.exceptions import UserDoesNotExist, IncorrectPassword
-from app.models import Base, User
-from app.schemas import UserCreate, UserUpdate
+from app.models import Base, User, Quiz
+from app.schemas import UserCreate, UserUpdate, QuizCreate, QuizUpdate
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -182,3 +179,19 @@ event.listen(
 event.listen(
     User.__table__, "after_create", _set_number_trigger.execute_if(dialect="postgresql")
 )
+
+
+#######################################################################################
+# Quiz
+class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
+    def create(self, db: Session, *, obj_init: UserCreate) -> User:
+        db_obj = Quiz(name=obj_init.name)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+
+quiz = CRUDQuiz(Quiz)
+
+

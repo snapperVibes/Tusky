@@ -1,3 +1,4 @@
+from functools import wraps
 from typing import Generator
 
 from fastapi import HTTPException, Depends, status
@@ -58,3 +59,19 @@ def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def login_required(_func=None, *, example_arg=None):
+    # Boilerplate for decorator with optional kwargs:
+    #     https://realpython.com/primer-on-python-decorators/#both-please-but-never-mind-the-bread
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            pass
+
+        return wrapper
+
+    if _func is None:
+        return decorator
+    else:
+        return decorator(_func)

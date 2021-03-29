@@ -60,7 +60,6 @@ class UserUpdate(_UserBase):
     number: int = None
 
 
-
 class _UserInDBBase(_UserBase):
     id: Optional[UUID] = None
     identifier_name: str
@@ -114,16 +113,21 @@ class Room(_RoomInDBBase):
 
 
 class RoomInDB(_RoomInDBBase):
-    pass  # Todo: If there aren't additional properties, remove
+    pass
 
 
 ########################################################################################
 class _QuizBase(BaseModel):
-    name: Optional[str]
-
-
-class QuizCreate:
     name: str
+    owner: str
+
+
+class QuizCreate(_QuizBase):
+    pass
+
+
+class QuizUpdate(_QuizBase):
+    pass
 
 
 class _QuizInDBBase(_QuizBase):
@@ -134,4 +138,36 @@ class _QuizInDBBase(_QuizBase):
 
 
 class Quiz(_QuizInDBBase):
+    pass
+
+
+class QuizInDB(_QuizInDBBase):
+    pass
+
+########################################################################################
+class _QuestionBase(BaseModel):
+    name: str
+    owner: str
+
+
+class QuestionCreate(_QuizBase):
+    pass
+
+
+class QuestionUpdate(_QuizBase):
+    pass
+
+
+class _QuestionInDBBase(_QuestionBase):
+    id: Optional[UUID] = None
+
+    class Config:
+        orm_mode = True
+
+
+class Question(_QuizInDBBase):
+    pass
+
+
+class QuestionInDB(_QuizInDBBase):
     pass
