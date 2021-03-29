@@ -7,11 +7,11 @@ from sqlalchemy.orm import Session
 
 from app import settings, crud, schemas, models
 from app.core import security
+from app.routes._depends import login_required
 from app.routes import _depends as deps
 
 #######################################################################################
 # login
-
 login_router = APIRouter()
 
 
@@ -58,8 +58,7 @@ def create_user(
     user_init: schemas.UserCreate,
     current_user: models.User = Depends(deps.get_current_active_superuser)
 ):
-    user = crud.user.create(db, obj_init=user_init)
-    return user
+    return crud.user.create(db, obj_init=user_init)
 
 
 @users_router.get("/me", response_model=schemas.User)
@@ -71,6 +70,37 @@ def read_current_user(
 
 
 #######################################################################################
+# quiz
+quiz_router = APIRouter()
+
+
+# HUGE TODO: Although I'm 80% sure  get_current_active_user means that
+#       login is required, it would be best to check.
+@login_required
+@quiz_router.post("/quizzes/create", response_model=schemas.Quiz)
+def create_quiz(
+    *,
+    db: Session = Depends(deps.get_db),
+    obj_init: schemas.QuizCreate,
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    return crud.quiz.create(db, obj_init=obj_init)
+
+
+@login_required
+@quiz_router.post("questions/create")
+def create_question(
+    *,
+    db: Session = Depends(deps.get_db),
+    obj_init: schemas.QuestionCreate,
+):
+    crud.question.create(db, obj_init=obj_init)
+
+
+
+
+
+#######################################################################################
 api_router = APIRouter()
 api_router.include_router(login_router, prefix=settings.API_V1_STR, tags=["login"])
 api_router.include_router(
@@ -78,4 +108,7 @@ api_router.include_router(
 )
 api_router.include_router(
     rooms_router, prefix=settings.API_V1_STR + "/rooms", tags=["rooms"]
+)
+api_router.include_router(
+    quiz_router, tags=["quizzes"]
 )
