@@ -10,7 +10,14 @@ from sqlalchemy.sql.schema import (
 )
 from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint, ENUM
 from sqlalchemy.sql import functions
-from sqlalchemy.sql.sqltypes import INT, TEXT, BOOLEAN as BOOL, VARCHAR, DateTime, LargeBinary
+from sqlalchemy.sql.sqltypes import (
+    INT,
+    TEXT,
+    BOOLEAN as BOOL,
+    VARCHAR,
+    DateTime,
+    LargeBinary,
+)
 
 
 @as_declarative()
@@ -152,10 +159,13 @@ class Answer(Base):
         Order: Draggable answer whose correctness is decided by its position
         ShortAnswer: Student's write in answers compared to a selection of correct answers
         Essay: Teacher manually grades written responses"""
+
     id = ID()
     ts = TS()
     question_id = QuestionFK()
-    identifier = C(ENUM(AnswerIdentifier), default=AnswerIdentifier.LETTER, nullable=False)
+    identifier = C(
+        ENUM(AnswerIdentifier), default=AnswerIdentifier.LETTER, nullable=False
+    )
     previous_answer = AnswerFK()
     image = ImageFK()
 
@@ -174,4 +184,3 @@ class Image(Base):
     data = C(LargeBinary, nullable=False)
     description = C(TEXT)
     image = ImageFK()
-
