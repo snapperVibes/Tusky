@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app import init_app, crud, schemas
+from app import main, crud, schemas
 from app.core import settings
 from app.database import SessionLocal
 
@@ -34,7 +34,7 @@ def db() -> Generator:
 
 @pytest.fixture(scope="module")
 def client() -> Generator:
-    app = init_app()
+    app = main.init_app()
     with TestClient(app) as test_client:
         yield test_client
 

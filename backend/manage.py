@@ -37,7 +37,7 @@ def resetdb():
 def runserver():
     """ Initializes and starts a development server"""
     create_all()
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 
 
 cli.add_command(initdb)

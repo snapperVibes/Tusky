@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# TODO: figure out how to refactor into {project_root}/scripts
 # Use this script to test if a given TCP host/port are available
 # https://github.com/vishnubob/wait-for-it/blob/master/wait-for-it.sh
 # chmod 774
