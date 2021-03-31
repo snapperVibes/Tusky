@@ -19,3 +19,10 @@ I (as the developer) just prefer less files.
 Sadly, Python was written before this mantra took to the mainstream.
 However, I fully believe that Python wouldn't have catchable exceptions if it were written today.
 After all, [explicit is better than implicit](https://www.python.org/dev/peps/pep-0020/#id2).
+
+### Notes and Comments:
+FastAPI's creator, [Sebastián Ramírez](https://github.com/tiangolo), has done a wonderful job making his framework 
+fun and easy to develop for.
+This project's structure is heavily inspired by the [FastAPI/Postgres cookecutter](https://github.com/tiangolo/full-stack-fastapi-postgresql/tree/master/%7B%7Bcookiecutter.project_slug%7D%7D).
+
+The decision to use Vue for the frontend was based solely on the cookiecutter. The initial plan was to do the whole project using FastAPI, 

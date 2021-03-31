@@ -12,7 +12,7 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 
-[*.html]
+[{*.html, *.vue}]
 indent_size = 2
 
 [*.css]
@@ -25,3 +25,10 @@ trim_trailing_whitespace = false
 
 [*.yml]
 indent_size = 2
+
+[*.json]
+indent_size = 2
+
+[*.ts]
+indent_size = 2
+ij_typescript_use_double_quotes = true

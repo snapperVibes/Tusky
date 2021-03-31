@@ -103,5 +103,7 @@ dmypy.json
 # Text editors
 .idea
 
+node_modules
+
 # Project specific stuff
 *.prod
