@@ -1,25 +1,26 @@
 <template>
-  <div id="app">
-    <v-app>
-      <v-content>
-      </v-content>
-
-    </v-app>
-  </div>
+  <img alt="Vue logo" src="./assets/logo.png">
+  <HelloWorld msg="Welcome to Your Vue.js App"/>
 </template>
-<script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
 
-// import { readIsLoggedIn } from "@store/main/getters"
-import { readIsLoggedIn } from "./store/main/getters";
+<script>
+import HelloWorld from './components/HelloWorld.vue'
 
-export default class App extends Vue {
-  get loggedIn() {
-    return readIsLoggedIn(this.$store);
+export default {
+  name: 'App',
+  components: {
+    HelloWorld,
   }
 }
 </script>
 
-<style scoped>
-
+<style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
+}
 </style>
