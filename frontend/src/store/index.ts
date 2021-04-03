@@ -1,12 +1,14 @@
-import { createStore } from 'vuex'
+import Vuex, { StoreOptions } from 'vuex'
 
-export default createStore({
-  state: {
-  },
-  mutations: {
-  },
-  actions: {
-  },
+import { mainModule } from './main'
+import { State } from './state'
+
+const storeOptions: StoreOptions<State> = {
   modules: {
+    main: mainModule
   }
-})
+}
+
+export const store = new Vuex.Store<State>(storeOptions)
+
+export default store

@@ -8,8 +8,12 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "core-js": "^3.6.5",
+    "typesafe-vuex": "^3.2.2",
     "vue": "^3.0.0",
+    "vue-class-component": "^7.2.6",
+    "vue-property-decorator": "^9.1.2",
     "vue-router": "^4.0.0-0",
     "vuex": "^4.0.0-0"
   },
