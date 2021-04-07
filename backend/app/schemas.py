@@ -147,15 +147,16 @@ class QuizInDB(_QuizInDBBase):
 
 ########################################################################################
 class _QuestionBase(BaseModel):
-    name: str
-    owner: str
+    query: str
+    quiz_name: str
+    owner_name: str
 
 
-class QuestionCreate(_QuizBase):
+class QuestionCreate(_QuestionBase):
     pass
 
 
-class QuestionUpdate(_QuizBase):
+class QuestionUpdate(_QuestionBase):
     pass
 
 
@@ -166,9 +167,9 @@ class _QuestionInDBBase(_QuestionBase):
         orm_mode = True
 
 
-class Question(_QuizInDBBase):
+class Question(_QuestionInDBBase):
     pass
 
 
-class QuestionInDB(_QuizInDBBase):
+class QuestionInDB(_QuestionInDBBase):
     pass

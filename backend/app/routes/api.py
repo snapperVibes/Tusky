@@ -1,5 +1,6 @@
 __all__ = ["api_router"]
 from datetime import timedelta
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -92,8 +93,28 @@ def create_quiz(
     return crud.quiz.create(db, obj_init=obj_init)
 
 
+@quiz_router.get("/quizzes/get")
+def get_quiz(*, db: Session = Depends(deps.get_db), owner: str, quiz_name: str):
+    quiz_result = crud.quiz.get_by_owner_and_name(db, owner=owner, name=quiz_name)
+    if quiz := quiz_result.ok():
+        pass
+    else:
+        # Todo: Make this public facing
+        raise quiz_result.err()
+    if quiz.is_public:
+        return quiz
+    # Todo: Verification
+    return quiz
+
+
+@quiz_router.get("/answers/get_by_quiz")
+def get_quiz(*, db: Session = Depends(deps.get_db), quiz_id: str):
+    # Todo: Confirm quiz is public
+    return crud.question.get_multi_by_quiz_id(db, quiz_id=quiz_id)
+
+
 @login_required
-@quiz_router.post("questions/create")
+@quiz_router.post("/questions/create")
 def create_question(
     *,
     db: Session = Depends(deps.get_db),

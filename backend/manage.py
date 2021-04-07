@@ -14,10 +14,7 @@ def cli():
 def initdb():
     # Todo: Find a production-ready way to create superuser in dockerfile.web
     success = create_all()
-    if success:
-        click.echo("Tables were created and the super-user was initialized")
-    else:
-        click.echo("Tables were created")
+    click.echo("Tables were created")
 
 
 @click.command()
