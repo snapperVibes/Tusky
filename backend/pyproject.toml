@@ -23,6 +23,7 @@ python-multipart = "^0.0.5"
 # This library had major breaking changes between 0.5 and 0.6,
 #  so it feels safer to specify the version explictly.
 result = "0.6.0"
+click = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"

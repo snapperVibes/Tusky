@@ -140,7 +140,10 @@ class Security:
         #   then composes pre-combined characters again...
         #   The normal form KD (NFKD) will apply the compatibility decomposition,
         #   i.e. replace all compatibility characters with their equivalents.
-        return unicodedata.normalize("NFKD", text).lower()
+        name = unicodedata.normalize("NFKD", text).lower()
+        if "#" in name:
+            raise
+        return name
 
 
 settings = Settings()

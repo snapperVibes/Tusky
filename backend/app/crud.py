@@ -1,4 +1,4 @@
-__all__ = ["user"]
+__all__ = ["user", "quiz", "question"]
 
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
@@ -7,12 +7,20 @@ from pydantic import BaseModel
 from result import Ok, Err, Result
 from sqlalchemy import DDL, event
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.orm import Session
 
 from app.core import security
 from app.exceptions import UserDoesNotExist, IncorrectPassword
-from app.models import Base, User, Quiz
-from app.schemas import UserCreate, UserUpdate, QuizCreate, QuizUpdate
+from app.models import Base, User, Quiz, Question
+from app.schemas import (
+    UserCreate,
+    UserUpdate,
+    QuizCreate,
+    QuizUpdate,
+    QuestionCreate,
+    QuestionUpdate,
+)
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -88,9 +96,17 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         return db_obj
 
     def get_by_name_and_number(
-        self, db: Session, *, name: str, number: int
+        self, db: Session, *, name: str, number: Optional[int] = None
     ) -> Result[User, UserDoesNotExist]:
-        normalized_name = security.to_identifier(name)
+        # Allows a name to be passed as
+        # name='exampleuser#1234' or name='exampleuser', number=1234
+        _name, _, _number = name.partition("#")
+        if _number:
+            if number:
+                raise ("A number and hash symbol were both passed")
+            number = _number
+
+        normalized_name = security.to_identifier(_name)
         _user = (
             db.query(User)
             .filter(User.identifier_name == normalized_name, User.number == number)
@@ -112,7 +128,8 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
             return Err(IncorrectPassword(username, number))
         return Ok(user)
 
-    # Todo: Figure out point of method. It's in the cookiecutter so there has to be a point, right?
+    # Todo: Figure out point of method. It's in the cookiecutter so there has to be a
+    #  point, right?
     def is_active(self, user: User) -> bool:
         return user.is_active
 
@@ -184,12 +201,57 @@ event.listen(
 #######################################################################################
 # Quiz
 class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
-    def create(self, db: Session, *, obj_init: UserCreate) -> User:
-        db_obj = Quiz(name=obj_init.name)
+    def create(self, db: Session, *, obj_init: QuizCreate) -> Quiz:
+        owner_result = user.get_by_name_and_number(db, name=obj_init.owner)
+        if owner := owner_result.ok():
+            pass
+        else:
+            raise owner_result.err()
+        db_obj = Quiz(name=obj_init.name, owner=owner.id)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
 
+    def get_by_owner_and_name(
+        self, db: Session, *, owner: str, name: str
+    ) -> Result[Quiz, Union[UserDoesNotExist, NoResultFound, MultipleResultsFound]]:
+        owner_result = user.get_by_name_and_number(db, name=owner)
+        if owner := owner_result.ok():
+            pass
+        else:
+            return Err(owner_result.err())
+        try:
+            return Ok(
+                db.query(self.model)
+                .filter(User.id == owner.id, Quiz.name == name)
+                .one()
+            )
+        except (NoResultFound, MultipleResultsFound) as InvalidRequest:
+            return Err(InvalidRequest)
+
 
 quiz = CRUDQuiz(Quiz)
+
+
+#######################################################################################
+# Question
+class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
+    def create(self, db: Session, *, obj_init: QuestionCreate) -> Question:
+        quiz_result = quiz.get_by_owner_and_name(
+            db, owner=obj_init.owner_name, name=obj_init.quiz_name
+        )
+        if _quiz := quiz_result.ok():
+            pass
+        else:
+            raise quiz_result.err()
+        db_obj = Question(quiz_fk=_quiz.id, query=obj_init.query)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+    def get_multi_by_quiz_id(self, db: Session, *, quiz_id: UUID) -> List[Question]:
+        return db.query(Question).filter(Question.quiz_fk == quiz_id).all()
+
+question = CRUDQuestion(Question)

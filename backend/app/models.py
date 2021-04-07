@@ -143,6 +143,7 @@ class Question(Base):
     id = ID()
     ts = TS()
     quiz_fk = QuizFK()
+    query = C(TEXT)
 
 
 class AnswerIdentifier(enum.Enum):
