@@ -12,8 +12,12 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 
-[{*.html, *.css, *.yml, *.json}]
+[{*.html, *.vue, *.ts, *.css, *.yml, *.json}]
+# Synchronized with package.json['prettier'] and .eslintrc.js
 indent_size = 2
+
+[{Dockerfile, *.dockerfile}]
+indent_style=tab
 
 [*.md]
 # double whitespace at end of line

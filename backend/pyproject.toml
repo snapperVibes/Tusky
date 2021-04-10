@@ -12,7 +12,7 @@ authors = ["Snapper <learningwithsnapper@gmail.com>"]
 python = "^3.8"
 fastapi = "^0.63.0"
 # SQLAlchemy 1.4 is a transition release before features are deprecated in 2.0
-SQLAlchemy = "1.4.0b3"
+SQLAlchemy = "1.4.6"
 pydantic = {extras = ["email", "dotenv"], version = "^1.8.1"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 uvicorn = "^0.13.4"
