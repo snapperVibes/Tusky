@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core import security
 from app.exceptions import UserDoesNotExist, IncorrectPassword
-from app.models import Base, User, Quiz, Question
+from app.models import Base, User, Quiz, Question, Answer
 from app.schemas import (
     UserCreate,
     UserUpdate,
@@ -20,6 +20,9 @@ from app.schemas import (
     QuizUpdate,
     QuestionCreate,
     QuestionUpdate,
+    AnswerCreate,
+    AnswerUpdate,
+    QuizGet,
 )
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -198,25 +201,43 @@ event.listen(
 )
 
 
-#######################################################################################
-# Quiz
 class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
     def create(self, db: Session, *, obj_init: QuizCreate) -> Quiz:
-        owner_result = user.get_by_name_and_number(db, name=obj_init.owner)
+        # Todo: Learn SQLAlchemy relations; it handles getting foreign keys for us
+        owner_result = user.get_by_name_and_number(db, name=obj_init.owner_name)
         if owner := owner_result.ok():
             pass
         else:
             raise owner_result.err()
-        db_obj = Quiz(name=obj_init.name, owner=owner.id)
-        db.add(db_obj)
+        db_quiz_obj = Quiz(name=obj_init.quiz_name, owner=owner.id)
+        db.add(db_quiz_obj)
+        db.flush()
+        db.refresh(db_quiz_obj)
+        # Add questions and answers
+        for _question in obj_init.questions:
+            db_question_obj = Question(quiz_fk=db_quiz_obj.id, query=_question.query)
+            db.add(db_question_obj)
+            db.flush()
+            db.refresh(db_question_obj)
+            previous_answer_id = None
+            for _answer in _question.answers:
+                db_answer_obj = Answer(
+                    question_id=db_question_obj.id,
+                    text=_answer.text,
+                    previous_answer=previous_answer_id,
+                )
+                db.add(db_answer_obj)
+                db.flush()
+                db.refresh(db_answer_obj)
+                previous_answer_id = db_answer_obj.id
         db.commit()
-        db.refresh(db_obj)
-        return db_obj
+        db.refresh(db_quiz_obj)
+        return db_quiz_obj
 
-    def get_by_owner_and_name(
-        self, db: Session, *, owner: str, name: str
+    def get_basics(
+        self, db: Session, *, obj_init: QuizGet
     ) -> Result[Quiz, Union[UserDoesNotExist, NoResultFound, MultipleResultsFound]]:
-        owner_result = user.get_by_name_and_number(db, name=owner)
+        owner_result = user.get_by_name_and_number(db, name=obj_init.owner_name)
         if owner := owner_result.ok():
             pass
         else:
@@ -224,34 +245,52 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
         try:
             return Ok(
                 db.query(self.model)
-                .filter(User.id == owner.id, Quiz.name == name)
+                .filter(User.id == owner.id, Quiz.name == obj_init.quiz_name)
                 .one()
             )
         except (NoResultFound, MultipleResultsFound) as InvalidRequest:
             return Err(InvalidRequest)
 
-
-quiz = CRUDQuiz(Quiz)
-
-
-#######################################################################################
-# Question
-class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
-    def create(self, db: Session, *, obj_init: QuestionCreate) -> Question:
-        quiz_result = quiz.get_by_owner_and_name(
-            db, owner=obj_init.owner_name, name=obj_init.quiz_name
-        )
+    def get_full(
+        self, db: Session, *, obj_init: QuizGet
+    ) -> Result[Quiz, Union[UserDoesNotExist, NoResultFound, MultipleResultsFound]]:
+        quiz_result = self.get_basics(db, obj_init=obj_init)
         if _quiz := quiz_result.ok():
             pass
         else:
-            raise quiz_result.err()
-        db_obj = Question(quiz_fk=_quiz.id, query=obj_init.query)
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+            return Err(quiz_result.err())
+        questions = db.query(Question).filter(Question.quiz_fk == _quiz.id).all()
+        for q in questions:
+            q.answers = db.query(Answer).filter(Answer.question_id==q.id).all()
+        _quiz.questions = questions
+        return _quiz
 
-    def get_multi_by_quiz_id(self, db: Session, *, quiz_id: UUID) -> List[Question]:
-        return db.query(Question).filter(Question.quiz_fk == quiz_id).all()
 
-question = CRUDQuestion(Question)
+quiz = CRUDQuiz(Quiz)
+
+#
+# class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
+#     def get_multi_(self, db: Session, *, quiz_id: UUID) -> List[Question]:
+#         return db.query(Question).filter(Question.quiz_fk == quiz_id).all()
+
+
+# question = CRUDQuestion(Question)
+
+
+# class CRUDAnswer(_CRUDBase[Answer, AnswerCreate, AnswerUpdate]):
+#     def create(self, db: Session, *, obj_init: AnswerCreate) -> Answer:
+#         quiz_result = quiz.get_basics(
+#             db, owner=obj_init.owner_name, name=obj_init.quiz_name
+#         )
+#         if _quiz := quiz_result.ok():
+#             pass
+#         else:
+#             raise quiz_result.err()
+#         db_obj = Answer(quiz_fk=_quiz.id, query=obj_init.query)
+#         db.add(db_obj)
+#         db.commit()
+#         db.refresh(db_obj)
+#         return db_obj
+#
+#
+# answer = CRUDAnswer(Answer)

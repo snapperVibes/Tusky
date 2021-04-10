@@ -1,6 +1,5 @@
 __all__ = ["api_router"]
 from datetime import timedelta
-from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -13,6 +12,8 @@ from app.routes import _depends as deps
 
 #######################################################################################
 # login
+from app.schemas import QuizGet
+
 login_router = APIRouter()
 
 
@@ -23,7 +24,8 @@ def home():
 
 @login_router.post("/login/access-token", response_model=schemas.Token)
 def login_access_token(
-    db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
+    db: Session = Depends(deps.get_db),
+    form_data: OAuth2PasswordRequestForm = Depends(OAuth2PasswordRequestForm),
 ):
     """
     OAuth2 compatible token login, get an access token for future requests
@@ -83,7 +85,7 @@ quiz_router = APIRouter()
 # HUGE TODO: Although I'm 80% sure  get_current_active_user means that
 #       login is required, it would be best to check.
 @login_required
-@quiz_router.post("/quizzes/create", response_model=schemas.Quiz)
+@quiz_router.post("/create", response_model=schemas.Quiz)
 def create_quiz(
     *,
     db: Session = Depends(deps.get_db),
@@ -93,9 +95,13 @@ def create_quiz(
     return crud.quiz.create(db, obj_init=obj_init)
 
 
-@quiz_router.get("/quizzes/get")
-def get_quiz(*, db: Session = Depends(deps.get_db), owner: str, quiz_name: str):
-    quiz_result = crud.quiz.get_by_owner_and_name(db, owner=owner, name=quiz_name)
+@quiz_router.get("/getTitle")
+def get_quiz_title(
+    *, db: Session = Depends(deps.get_db), quiz_get: QuizGet = Depends(QuizGet)
+):
+    quiz_result = crud.quiz.get_basics(
+        db, obj_init=quiz_get
+    )
     if quiz := quiz_result.ok():
         pass
     else:
@@ -107,20 +113,13 @@ def get_quiz(*, db: Session = Depends(deps.get_db), owner: str, quiz_name: str):
     return quiz
 
 
-@quiz_router.get("/answers/get_by_quiz")
-def get_quiz(*, db: Session = Depends(deps.get_db), quiz_id: str):
-    # Todo: Confirm quiz is public
-    return crud.question.get_multi_by_quiz_id(db, quiz_id=quiz_id)
-
-
-@login_required
-@quiz_router.post("/questions/create")
-def create_question(
-    *,
-    db: Session = Depends(deps.get_db),
-    obj_init: schemas.QuestionCreate,
+@quiz_router.get("/get")
+def get_full_quiz(
+    *, db: Session = Depends(deps.get_db), quiz_get: QuizGet = Depends(QuizGet)
 ):
-    crud.question.create(db, obj_init=obj_init)
+    # Todo: Figure out depends so we can have owner / quiz_name be a schema
+    # Todo: Confirm quiz is public
+    return crud.quiz.get_full(db, obj_init=quiz_get)
 
 
 #######################################################################################
@@ -128,4 +127,4 @@ api_router = APIRouter()
 api_router.include_router(login_router, tags=["login"])
 api_router.include_router(users_router, prefix="/users", tags=["users"])
 api_router.include_router(rooms_router, prefix="/rooms", tags=["rooms"])
-api_router.include_router(quiz_router, tags=["quizzes"])
+api_router.include_router(quiz_router, prefix="/quizzes", tags=["quizzes"])

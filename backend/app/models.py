@@ -49,6 +49,11 @@ def does_not_contain(column: str, regex: str):
 
 #######################################################################################
 # Functions for common columns
+# Todo: Sadly, it looks like I implemented my primary keys wrong
+#  I want to use a SnowFlake implementation, but I have some concerns with the protocol
+#  Namely, a SnowFlake's epoch is only 69 years long, and Twitter has deprecated them
+#  https://github.com/twitter-archive/snowflake/tree/snowflake-2010
+#  It seems that public facing snowflakes are okay as primary keys
 def ID(**kw):
     # return C(INT, IDENTITY(), primary_key=True, **kw)
     return C(
@@ -161,19 +166,13 @@ class Answer(Base):
         ShortAnswer: Student's write in answers compared to a selection of correct answers
         Essay: Teacher manually grades written responses"""
 
+    # Todo: ExcludeConstraint where only one null previous_answer per question
     id = ID()
     ts = TS()
     question_id = QuestionFK()
-    identifier = C(
-        ENUM(AnswerIdentifier), default=AnswerIdentifier.LETTER, nullable=False
-    )
     previous_answer = AnswerFK()
-    image = ImageFK()
-
-
-class QuizOwner(Base):
-    quiz = QuizFK(primary_key=True)
-    user = UserFK(primary_key=True)
+    text = C(TEXT)
+    # image = ImageFK()
 
 
 class Image(Base):

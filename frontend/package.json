@@ -32,5 +32,8 @@
     "eslint-plugin-vue": "^7.0.0",
     "prettier": "^2.2.1",
     "typescript": "~4.1.5"
+  },
+  "prettier": {
+    "tabWidth": 2
   }
 }

@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr, validator
 from uuid import UUID
@@ -117,43 +117,40 @@ class RoomInDB(_RoomInDBBase):
 
 
 ########################################################################################
-class _QuizBase(BaseModel):
-    name: str
-    owner: str
+class _AnswerBase(BaseModel):
+    text: str
 
 
-class QuizCreate(_QuizBase):
+class AnswerCreate(_AnswerBase):
     pass
 
 
-class QuizUpdate(_QuizBase):
+class AnswerUpdate(_AnswerBase):
     pass
 
 
-class _QuizInDBBase(_QuizBase):
+class _AnswernInDBBase(_AnswerBase):
     id: Optional[UUID] = None
 
     class Config:
         orm_mode = True
 
 
-class Quiz(_QuizInDBBase):
+class Answer(_AnswernInDBBase):
     pass
 
 
-class QuizInDB(_QuizInDBBase):
+class AnswerInDB(_AnswernInDBBase):
     pass
 
 
 ########################################################################################
 class _QuestionBase(BaseModel):
     query: str
-    quiz_name: str
-    owner_name: str
 
 
 class QuestionCreate(_QuestionBase):
-    pass
+    answers: List[AnswerCreate]
 
 
 class QuestionUpdate(_QuestionBase):
@@ -168,8 +165,42 @@ class _QuestionInDBBase(_QuestionBase):
 
 
 class Question(_QuestionInDBBase):
-    pass
+    answers: List[Answer]
 
 
 class QuestionInDB(_QuestionInDBBase):
+    pass
+
+
+########################################################################################
+class _QuizBase(BaseModel):
+    quiz_name: str
+    owner_name: str
+
+
+class QuizCreate(_QuizBase):
+    questions: Optional[List[QuestionCreate]]
+
+
+class QuizUpdate(_QuizBase):
+    pass
+
+
+class QuizGet(_QuizBase):
+    # Todo: Why aren't getters part of the cookiecutter schema?
+    pass
+
+
+class _QuizInDBBase(_QuizBase):
+    id: Optional[UUID] = None
+
+    class Config:
+        orm_mode = True
+
+
+class Quiz(_QuizInDBBase):
+    questions: List[Question]
+
+
+class QuizInDB(_QuizInDBBase):
     pass
