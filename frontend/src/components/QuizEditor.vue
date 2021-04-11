@@ -1,14 +1,15 @@
 <template>
-  <!--  TODO: Documentation: For an element to be editable, the element must be wrapped in a div. The div must contain 2 child elements; The second must be an label-->
+  <!--  TODO: Documentation: For an element to be editable, the element must be wrapped in a div.
+   The div's id must be the editable field followed by and underscore and the PK
+   The div must contain 2 child elements; The second must be an label-->
   <div class="quiz">
     <div
       class="quiz__div_quiz-name"
-      v-bind:id="'quiz_' + quiz.id"
+      v-bind:id="'name_' + quiz.id"
       v-on:dblclick="editElement"
     >
       <h1 class="quiz__div_quiz-name_h1" v-html="quiz.name"></h1>
       <label hidden>
-        ok
         <input
           class="quiz__div_quiz-name_input text-editor"
           type="text"
@@ -40,7 +41,7 @@
           <li v-for="a in q.answers" :key="a" class="quiz__li_answer">
             <div
               class="quiz__div_answer"
-              v-bind:id="'answer_' + a.id"
+              v-bind:id="'text_' + a.id"
               v-on:dblclick="editElement"
             >
               <span class="quiz__div_answer_text">
@@ -67,14 +68,34 @@ import { api } from "@/api";
 
 let _quiz = api.getQuiz("Admin#0000", "Example Quiz");
 
-function getElementPK(element) {
+function splitIdParts(element) {
   let splitId = element.id.split("_");
-  return splitId[splitId.length - 1];
+  // Doing it this way makes it easier to extend the id in the future
+  return {
+    part: splitId[splitId.length - 2],
+    pk: splitId[splitId.length - 1],
+  };
+}
+
+function getAll(obj, pk) {
+  for (const [_, value] of Object.entries(obj)) {
+    if (pk === value) {
+      return obj;
+    }
+    if (typeof value != "object" || value === null) {
+      continue;
+    }
+    let r = getAll(value, pk);
+    if (r) {
+      return r;
+    }
+  }
 }
 
 export default class QuizEditor extends Vue {
   // Todo: Order answers: This should happen at the API level
   quiz = _quiz.then((res) => (this.quiz = res.data));
+
   editElement(dblclickEvent) {
     // Todo: This selector feels un-idiomatic. What's the Vue way to do this?
     let element = dblclickEvent.target;
@@ -85,22 +106,37 @@ export default class QuizEditor extends Vue {
     }
     let labelElement = parent.lastElementChild;
     let inputElement = labelElement.firstElementChild;
+    inputElement.setAttribute("placeholder", element.textContent);
 
+    // Swap invisibility
     textElement.setAttribute("hidden", "true");
     labelElement.removeAttribute("hidden");
     inputElement.focus();
   }
+
   setText(keyupEvent) {
     // Allow multiple-lines if the user holds the control-key
     if (keyupEvent.ctrlKey) {
       return;
     }
     // The first parent is the label. The second parent is the div
-    let parentElement = keyupEvent.target.parentElement.parentElement;
+    let labelElement = keyupEvent.target.parentElement;
+    let parentElement = labelElement.parentElement;
     let textElement = parentElement.firstElementChild;
-    textElement.textContent = keyupEvent.target.value;
-    let pk = getElementPK(parentElement);
-    // let idAttribute = searchForPK(this.quiz);
+    let idParts = splitIdParts(parentElement);
+    // Todo: Better naming; both the names quizAttr and getAll are weak
+    let quizAttr = getAll(this.quiz, idParts.pk);
+
+    let text = keyupEvent.target.value.trim();
+    if (text === "") {
+      // If the box is empty, return the original value
+    } else {
+      quizAttr[idParts.part] = text;
+      // Mark element as dirty
+    }
+    // Swap invisibility
+    labelElement.setAttribute("hidden", "true");
+    textElement.removeAttribute("hidden");
   }
 }
 </script>
