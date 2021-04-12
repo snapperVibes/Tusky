@@ -1,5 +1,6 @@
 __all__ = ["api_router"]
 from datetime import timedelta
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -12,7 +13,7 @@ from app.routes import _depends as deps
 
 #######################################################################################
 # login
-from app.schemas import QuizGet
+from app.schemas import QuizGet, QuizUpdate
 
 login_router = APIRouter()
 
@@ -99,9 +100,7 @@ def create_quiz(
 def get_quiz_title(
     *, db: Session = Depends(deps.get_db), quiz_get: QuizGet = Depends(QuizGet)
 ):
-    quiz_result = crud.quiz.get_basics(
-        db, obj_init=quiz_get
-    )
+    quiz_result = crud.quiz.get_basics(db, obj_init=quiz_get)
     if quiz := quiz_result.ok():
         pass
     else:
@@ -117,9 +116,25 @@ def get_quiz_title(
 def get_full_quiz(
     *, db: Session = Depends(deps.get_db), quiz_get: QuizGet = Depends(QuizGet)
 ):
-    # Todo: Figure out depends so we can have owner / quiz_name be a schema
+    # Todo: Figure out depends so we can have owner / name be a schema
     # Todo: Confirm quiz is public
     return crud.quiz.get_full(db, obj_init=quiz_get)
+
+
+@quiz_router.put("/update")
+def update_quiz(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: UUID,
+    quiz_init: schemas.QuizUpdate,
+):
+    quiz = crud.quiz.get(db=db, id=id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Item not found")
+    # if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
+    #     raise HTTPException(status_code=400, detail="Not enough permissions")
+    quiz = crud.quiz.update(db=db, db_obj=quiz, obj_init=quiz_init)
+    return quiz
 
 
 #######################################################################################

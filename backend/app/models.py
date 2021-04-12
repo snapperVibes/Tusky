@@ -1,14 +1,16 @@
 import enum
+from typing import Dict
 
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.sql.expression import text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import (
     Column as C,
     ForeignKey as FK,
     CheckConstraint,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint, ENUM
+from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint
 from sqlalchemy.sql import functions
 from sqlalchemy.sql.sqltypes import (
     INT,
@@ -50,10 +52,12 @@ def does_not_contain(column: str, regex: str):
 #######################################################################################
 # Functions for common columns
 # Todo: Sadly, it looks like I implemented my primary keys wrong
-#  I want to use a SnowFlake implementation, but I have some concerns with the protocol
-#  Namely, a SnowFlake's epoch is only 69 years long, and Twitter has deprecated them
-#  https://github.com/twitter-archive/snowflake/tree/snowflake-2010
-#  It seems that public facing snowflakes are okay as primary keys
+#   I want to use a SnowFlake implementation, but I have some concerns with the protocol
+#   Namely, a SnowFlake's epoch is only 69 years long, and Twitter has deprecated them
+#   https://github.com/twitter-archive/snowflake/tree/snowflake-2010
+#   It seems that public facing snowflakes are okay as primary keys
+# Todo: The defaults for nullable on Answer (and maybe later Question)
+#   does not match the others
 def ID(**kw):
     # return C(INT, IDENTITY(), primary_key=True, **kw)
     return C(
@@ -77,12 +81,10 @@ def QuizFK(**kw):
 
 
 def QuestionFK(**kw):
-    return C(UUID(as_uuid=True), FK("question.id"), nullable=False, **kw)
+    return C(UUID(as_uuid=True), FK("question.id"), nullable=True, **kw)
 
 
 def AnswerFK(**kw):
-    # Todo: This one is unique becuase nullable=True;
-    #  since it breaks the pattern, should it be removed?
     return C(UUID(as_uuid=True), FK("answer.id"), nullable=True, **kw)
 
 
@@ -112,6 +114,7 @@ class User(Base):
     hashed_password = C(TEXT, nullable=False)
     is_superuser = C(BOOL, default=False, nullable=False)
     is_active = C(BOOL, default=True)
+    quizzes = relationship("Quiz", back_populates="owner")
     # profile_picture = ImageFK()
 
     @property
@@ -132,27 +135,33 @@ class Room:
 
 
 class Quiz(Base):
-    __table_args__ = (UniqueConstraint("name", "owner"),)
+    __table_args__ = (UniqueConstraint("name", "owner_id"),)
     id = ID()
     ts = TS()
+    # Todo: Consider changing to title before it's too late not to
     name = C(
         VARCHAR(32),
         CheckConstraint(min_size("name", 1)),
         nullable=False,
     )
-    owner = UserFK()
+    owner_id = UserFK()
+    owner = relationship("User", back_populates="quizzes")
     is_public = C(BOOL, default=True)
+    questions = relationship("Question", back_populates="quiz")
 
 
 class Question(Base):
     id = ID()
     ts = TS()
-    quiz_fk = QuizFK()
+    quiz_id = QuizFK()
+    quiz = relationship("Quiz", back_populates="questions")
     query = C(TEXT)
+    answers = relationship("Answer", back_populates="question")
 
 
 class AnswerIdentifier(enum.Enum):
     # It doesn't feel worth the effort to allow custom answer identifiers
+    #   As such, this is currently unused
     LETTER = "letter"
     NUMERIC = "numeric"
 
@@ -170,6 +179,7 @@ class Answer(Base):
     id = ID()
     ts = TS()
     question_id = QuestionFK()
+    question = relationship("Question", back_populates="answers")
     previous_answer = AnswerFK()
     text = C(TEXT)
     # image = ImageFK()
@@ -178,9 +188,8 @@ class Answer(Base):
 class Image(Base):
     id = ID()
     ts = TS()
-    uploaded_by = UserFK()
+    uploaded_by_user_id = UserFK()
     filename = C(TEXT, nullable=False)
     public_code = C(TEXT, nullable=False)  # Todo: Discuss optimal public facing name
     data = C(LargeBinary, nullable=False)
     description = C(TEXT)
-    image = ImageFK()

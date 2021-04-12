@@ -18,19 +18,17 @@ def create_all(**kw):
     db = SessionLocal()
 
     # Add the super user
-    super_user = schemas.UserCreate(
+    admin_obj = schemas.UserCreate(
         display_name=settings.FIRST_SUPERUSER,
         password=settings.FIRST_SUPERUSER_PASSWORD,
         is_superuser=True,
     )
     try:
-        crud.user.create(db, obj_init=super_user)
+        crud.user.create(db, obj_init=admin_obj)
     except InternalError:
         pass
-
     # Add the example quiz
     QUIZ_NAME = "Example Quiz"
-    OWNER_NAME = "ADMIN#0000"
     questions_and_answers = [
         (
             "What is your name?",
@@ -40,15 +38,14 @@ def create_all(**kw):
         ("What is your favorite color?", ["Blue", "Yellow"]),
     ]
     questions_inits = []
-    for q_and_a in questions_and_answers:
-        question, answers = q_and_a
+    for question, answers in questions_and_answers:
         questions_inits.append(
             schemas.QuestionCreate(
                 query=question, answers=[schemas.AnswerCreate(text=a) for a in answers]
             )
         )
     quiz = schemas.QuizCreate(
-        quiz_name=QUIZ_NAME, owner_name=OWNER_NAME, questions=questions_inits
+        name=QUIZ_NAME, owner="ADMIN#0000", questions=questions_inits
     )
     try:
         crud.quiz.create(db, obj_init=quiz)

@@ -14,16 +14,9 @@ export const api = {
   async getQuiz(owner: string, name: string) {
     return axios.get(`${apiUrl}/quizzes/get`, {
       params: {
-        quiz_name: name,
-        owner_name: owner,
+        name: name,
+        owner: owner,
       },
     });
-  },
-  async getQuestions(quiz_id: string) {
-    return axios.get(`${apiUrl}/answers/get_by_quiz`, {
-      params: {
-        quiz_id: quiz_id,
-      },
-    });
-  },
+  }
 };

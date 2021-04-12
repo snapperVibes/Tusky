@@ -59,6 +59,9 @@
         </ol>
       </li>
     </ol>
+    <div>
+      <button class="saveButton" v-on:click="saveAll">Save</button>
+    </div>
   </div>
 </template>
 
@@ -94,6 +97,7 @@ function getAll(obj, pk) {
 
 export default class QuizEditor extends Vue {
   // Todo: Order answers: This should happen at the API level
+
   quiz = _quiz.then((res) => (this.quiz = res.data));
 
   editElement(dblclickEvent) {
@@ -132,11 +136,15 @@ export default class QuizEditor extends Vue {
       // If the box is empty, return the original value
     } else {
       quizAttr[idParts.part] = text;
-      // Mark element as dirty
+      // Todo: mark element as dirty (and only change dirty elements)
     }
     // Swap invisibility
     labelElement.setAttribute("hidden", "true");
     textElement.removeAttribute("hidden");
+  }
+
+  saveAll() {
+    console.log("Saved!");
   }
 }
 </script>

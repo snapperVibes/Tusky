@@ -174,8 +174,8 @@ class QuestionInDB(_QuestionInDBBase):
 
 ########################################################################################
 class _QuizBase(BaseModel):
-    quiz_name: str
-    owner_name: str
+    name: str
+    owner: str
 
 
 class QuizCreate(_QuizBase):
