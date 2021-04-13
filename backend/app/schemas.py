@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, validator, Field
 from uuid import UUID
 
 
@@ -24,8 +24,8 @@ from uuid import UUID
 #         orm_mode = True
 #
 #
-# class Xyz(_XyzBase):
-#     """ Additional properties to return  via API """
+# class XyzPublic(_XyzBase):
+#     """ Additional properties to return via API """
 #
 #
 # class XyzInDB(_XyzInDBBase):
@@ -77,7 +77,7 @@ class _UserInDBBase(_UserBase):
         orm_mode = True
 
 
-class User(_UserInDBBase):
+class UserPublic(_UserInDBBase):
     pass
 
 
@@ -108,7 +108,7 @@ class _RoomInDBBase(_RoomBase):
         orm_mode = True
 
 
-class Room(_RoomInDBBase):
+class RoomPublic(_RoomInDBBase):
     pass
 
 
@@ -136,7 +136,7 @@ class _AnswernInDBBase(_AnswerBase):
         orm_mode = True
 
 
-class Answer(_AnswernInDBBase):
+class AnswerPublic(_AnswernInDBBase):
     pass
 
 
@@ -164,8 +164,8 @@ class _QuestionInDBBase(_QuestionBase):
         orm_mode = True
 
 
-class Question(_QuestionInDBBase):
-    answers: List[Answer]
+class QuestionPublic(_QuestionInDBBase):
+    answers: List[AnswerPublic]
 
 
 class QuestionInDB(_QuestionInDBBase):
@@ -175,7 +175,7 @@ class QuestionInDB(_QuestionInDBBase):
 ########################################################################################
 class _QuizBase(BaseModel):
     name: str
-    owner: str
+    owner: UUID = Field(alias="owner_id")
 
 
 class QuizCreate(_QuizBase):
@@ -183,7 +183,7 @@ class QuizCreate(_QuizBase):
 
 
 class QuizUpdate(_QuizBase):
-    pass
+    id: UUID
 
 
 class QuizGet(_QuizBase):
@@ -198,8 +198,8 @@ class _QuizInDBBase(_QuizBase):
         orm_mode = True
 
 
-class Quiz(_QuizInDBBase):
-    questions: List[Question]
+class QuizPublic(_QuizInDBBase):
+    questions: List[QuestionPublic]
 
 
 class QuizInDB(_QuizInDBBase):

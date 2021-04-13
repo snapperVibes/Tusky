@@ -1,10 +1,12 @@
+<!-- Good code shouldn't need comments. Unfortunately, the quality of this code is questionable -->
 <template>
-  <!--  TODO: Documentation: For an element to be editable, the element must be wrapped in a div.
-   The div's id must be the editable field followed by and underscore and the PK
-   The div must contain 2 child elements; The second must be an label-->
+  <!--  TODO: Documentation
+   For an element to be editable, the element must be wrapped in a div.
+   The div's id must be the editable field's counterpart on `this.quiz`, and underscore, and the primary key.
+   The div must contain 2 child elements; The second must be a label. -->
   <div class="quiz">
     <div
-      class="quiz__div_quiz-name"
+      class="quiz__div_quiz-name editable"
       v-bind:id="'name_' + quiz.id"
       v-on:dblclick="editElement"
     >
@@ -21,7 +23,7 @@
     <ol class="quiz__ol_question-list">
       <li v-for="q in quiz.questions" :key="q" class="quiz__li_question">
         <div
-          class="quiz__div_query"
+          class="quiz__div_query editable"
           v-bind:id="'query_' + q.id"
           v-on:dblclick="editElement"
         >
@@ -40,7 +42,7 @@
         <ol class="quiz__ol_answer-list">
           <li v-for="a in q.answers" :key="a" class="quiz__li_answer">
             <div
-              class="quiz__div_answer"
+              class="quiz__div_answer editable"
               v-bind:id="'text_' + a.id"
               v-on:dblclick="editElement"
             >
@@ -58,6 +60,25 @@
           </li>
         </ol>
       </li>
+      <!--      &lt;!&ndash; Additional Question &ndash;&gt;-->
+      <!--      <li class="quiz__li_question">-->
+      <!--        <div-->
+      <!--          class="quiz__div_query"-->
+      <!--          id="query_additional"-->
+      <!--          v-on:dblclick="editElement"-->
+      <!--        >-->
+      <!--          <span class="quiz__div_query_span additional editable">-->
+      <!--            Double click to add an additional question.-->
+      <!--          </span>-->
+      <!--          <label hidden>-->
+      <!--            <input-->
+      <!--              type="text"-->
+      <!--              class="quiz__div_query_input text-editor"-->
+      <!--              v-on:keyup.enter="setText"-->
+      <!--            />-->
+      <!--          </label>-->
+      <!--        </div>-->
+      <!--      </li>-->
     </ol>
     <div>
       <button class="saveButton" v-on:click="saveAll">Save</button>
@@ -69,7 +90,16 @@
 import { Vue } from "vue-class-component";
 import { api } from "@/api";
 
-let _quiz = api.getQuiz("Admin#0000", "Example Quiz");
+async function getData() {
+  let _admin = (await Promise.resolve(api.getUser("Admin", "0"))).data;
+  let _quiz = (await Promise.resolve(api.getQuiz("Example Quiz", _admin.id)))
+    .data;
+  return {
+    admin: _admin,
+    quiz: _quiz,
+  };
+}
+let data = getData();
 
 function splitIdParts(element) {
   let splitId = element.id.split("_");
@@ -98,7 +128,7 @@ function getAll(obj, pk) {
 export default class QuizEditor extends Vue {
   // Todo: Order answers: This should happen at the API level
 
-  quiz = _quiz.then((res) => (this.quiz = res.data));
+  quiz = data.then((res) => (this.quiz = res.quiz));
 
   editElement(dblclickEvent) {
     // Todo: This selector feels un-idiomatic. What's the Vue way to do this?
@@ -118,6 +148,7 @@ export default class QuizEditor extends Vue {
     inputElement.focus();
   }
 
+  // This function is called when the user finishes (clicks enter) on a text-editor
   setText(keyupEvent) {
     // Allow multiple-lines if the user holds the control-key
     if (keyupEvent.ctrlKey) {
@@ -144,6 +175,7 @@ export default class QuizEditor extends Vue {
   }
 
   saveAll() {
+    api.modifyQuiz(this.quiz.id, this.quiz.name, this.quiz.owner_id);
     console.log("Saved!");
   }
 }
@@ -156,5 +188,8 @@ export default class QuizEditor extends Vue {
 }
 .quiz__ol_answer-list {
   list-style: lower-alpha;
+}
+.additional {
+  font-style: italic;
 }
 </style>

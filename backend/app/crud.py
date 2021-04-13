@@ -51,6 +51,7 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def get(self, db: Session, id: Any) -> Optional[ModelType]:
+        print(id)
         return db.query(self.model).filter(self.model.id == id).first()
 
     def get_multi(
@@ -66,6 +67,8 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         obj_init: Union[UpdateSchemaType, Dict[str, Any]],
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
+        print("\n" * 5)
+        print(obj_data)
         if isinstance(obj_init, dict):
             update_data = obj_init
         else:
@@ -98,7 +101,7 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(db_obj)
         return db_obj
 
-    def get_by_name_and_number(
+    def get_by_name(
         self, db: Session, *, name: str, number: Optional[int] = None
     ) -> Result[User, UserDoesNotExist]:
         # Allows a name to be passed as
@@ -122,7 +125,7 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
     def authenticate(
         self, db: Session, *, username: str, number: int, password: str
     ) -> Result[User, Union[UserDoesNotExist, IncorrectPassword]]:
-        user_result = self.get_by_name_and_number(db, name=username, number=number)
+        user_result = self.get_by_name(db, name=username, number=number)
         if user := user_result.ok():
             pass
         else:  # Propagate error
@@ -204,12 +207,7 @@ event.listen(
 class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
     def create(self, db: Session, *, obj_init: QuizCreate) -> Quiz:
         # Todo: Learn SQLAlchemy relations; it handles getting foreign keys for us
-        owner_result = user.get_by_name_and_number(db, name=obj_init.owner)
-        if owner := owner_result.ok():
-            pass
-        else:
-            raise owner_result.err()
-        db_quiz_obj = Quiz(name=obj_init.name, owner_id=owner.id)
+        db_quiz_obj = Quiz(name=obj_init.name, owner_id=obj_init.owner)
         db.add(db_quiz_obj)
         db.flush()
         db.refresh(db_quiz_obj)
@@ -237,15 +235,10 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
     def get_basics(
         self, db: Session, *, obj_init: QuizGet
     ) -> Result[Quiz, Union[UserDoesNotExist, NoResultFound, MultipleResultsFound]]:
-        owner_result = user.get_by_name_and_number(db, name=obj_init.owner)
-        if owner := owner_result.ok():
-            pass
-        else:
-            return Err(owner_result.err())
         try:
             return Ok(
                 db.query(self.model)
-                .filter(User.id == owner.id, Quiz.name == obj_init.name)
+                .filter(User.id == obj_init.owner, Quiz.name == obj_init.name)
                 .one()
             )
         except (NoResultFound, MultipleResultsFound) as InvalidRequest:
@@ -261,7 +254,7 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
             return Err(quiz_result.err())
         questions = db.query(Question).filter(Question.quiz_id == _quiz.id).all()
         for q in questions:
-            q.answers = db.query(Answer).filter(Answer.question_id==q.id).all()
+            q.answers = db.query(Answer).filter(Answer.question_id == q.id).all()
         _quiz.questions = questions
         return _quiz
 

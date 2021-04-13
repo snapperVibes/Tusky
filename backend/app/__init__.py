@@ -4,7 +4,7 @@ __all__ = [
     "drop_all",
 ]
 
-from sqlalchemy.exc import InternalError, PendingRollbackError
+from sqlalchemy.exc import InternalError, IntegrityError
 
 from app.core import settings, security
 from app import crud, schemas, main
@@ -24,9 +24,16 @@ def create_all(**kw):
         is_superuser=True,
     )
     try:
-        crud.user.create(db, obj_init=admin_obj)
+        with db:
+            owner = crud.user.create(db, obj_init=admin_obj)
+            print("Admin created")
     except InternalError:
-        pass
+        with db:
+            owner_result = crud.user.get_by_name(db, name="Admin#0000")
+            if owner := owner_result.ok():
+                print("Admin already exists")
+            else:
+                raise owner_result.err()
     # Add the example quiz
     QUIZ_NAME = "Example Quiz"
     questions_and_answers = [
@@ -45,15 +52,14 @@ def create_all(**kw):
             )
         )
     quiz = schemas.QuizCreate(
-        name=QUIZ_NAME, owner="ADMIN#0000", questions=questions_inits
+        name=QUIZ_NAME, owner_id=owner.id, questions=questions_inits
     )
     try:
-        crud.quiz.create(db, obj_init=quiz)
-    except PendingRollbackError:
-        # Todo: Figure out more about this error and if there's a better error to catch
-        #  Currently, this code only works on database initialization
-        return
-    print("YeeHaw 🐴")
+        with db:
+            crud.quiz.create(db, obj_init=quiz)
+            print("Example quiz created")
+    except IntegrityError:
+        print("Example quiz already exists")
 
 
 def drop_all(**kw):

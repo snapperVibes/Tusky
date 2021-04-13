@@ -60,7 +60,7 @@ rooms_router = APIRouter()
 users_router = APIRouter()
 
 
-@users_router.post("/create", response_model=schemas.User)
+@users_router.post("/create", response_model=schemas.UserPublic)
 def create_user(
     *,
     db: Session = Depends(deps.get_db),
@@ -70,7 +70,15 @@ def create_user(
     return crud.user.create(db, obj_init=user_init)
 
 
-@users_router.get("/me", response_model=schemas.User)
+@users_router.get("/get-by-name", response_model=schemas.UserPublic)
+def get_by_name(*, db: Session = Depends(deps.get_db), name: str, number: int):
+    user_result = crud.user.get_by_name(db=db, name=name, number=number)
+    if user := user_result.ok():
+        return user
+    raise user.err()
+
+
+@users_router.get("/me", response_model=schemas.UserPublic)
 def read_current_user(
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_user),
@@ -86,7 +94,7 @@ quiz_router = APIRouter()
 # HUGE TODO: Although I'm 80% sure  get_current_active_user means that
 #       login is required, it would be best to check.
 @login_required
-@quiz_router.post("/create", response_model=schemas.Quiz)
+@quiz_router.post("/create", response_model=schemas.QuizPublic)
 def create_quiz(
     *,
     db: Session = Depends(deps.get_db),
@@ -112,7 +120,7 @@ def get_quiz_title(
     return quiz
 
 
-@quiz_router.get("/get")
+@quiz_router.get("/get", response_model=schemas.QuizPublic)
 def get_full_quiz(
     *, db: Session = Depends(deps.get_db), quiz_get: QuizGet = Depends(QuizGet)
 ):
@@ -121,14 +129,16 @@ def get_full_quiz(
     return crud.quiz.get_full(db, obj_init=quiz_get)
 
 
-@quiz_router.put("/update")
+@quiz_router.put("/update", response_model=schemas.QuizPublic)
 def update_quiz(
     *,
     db: Session = Depends(deps.get_db),
-    id: UUID,
     quiz_init: schemas.QuizUpdate,
 ):
-    quiz = crud.quiz.get(db=db, id=id)
+    quiz = crud.quiz.get(db=db, id=quiz_init.id)
+    # Todo: Add measures to allow a quiz to safely switch owners
+    if quiz_init.owner != quiz.owner_id:
+        raise ValueError("The owner of the quiz does not match the owner provided")
     if not quiz:
         raise HTTPException(status_code=404, detail="Item not found")
     # if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):

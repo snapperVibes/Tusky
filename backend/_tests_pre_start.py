@@ -27,7 +27,7 @@ sleep(2)
 def wait_for_database_to_be_setup() -> None:
     try:
         db = SessionLocal()
-        admin = crud.user.get_by_name_and_number(
+        admin = crud.user.get_by_name(
             db,
             name=settings.FIRST_SUPERUSER,
             number=0,
