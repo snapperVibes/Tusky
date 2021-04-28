@@ -28,13 +28,13 @@ export interface QuizPublic {
      * @type {string}
      * @memberof QuizPublic
      */
-    ownerId: any;
+    id?: any;
     /**
      * 
      * @type {string}
      * @memberof QuizPublic
      */
-    id?: any;
+    ownerId: any;
     /**
      * 
      * @type {Array&lt;QuestionPublic&gt;}

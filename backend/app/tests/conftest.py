@@ -58,7 +58,7 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
     user_init = schemas.UserCreate(
         display_name=settings.TEST_USER_NAME, password=password
     )
-    user = crud.user.create(db, obj_init=user_init)
+    user = crud.user.create(db, obj_in=user_init)
     return get_user_authentication_headers(
         client=client, name_and_number=user.name_and_number, password=password
     )

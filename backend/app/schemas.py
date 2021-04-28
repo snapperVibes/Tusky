@@ -1,6 +1,13 @@
+# SECURITY NOTE:
+#   Schemas _XyzBase and XyzUpdate CAN NOT have properties that would break things
+#   if the updated property is not the same as the original property
+#   without the schema also inheriting the LoginRequired mixin.
+#   At the time of writing, THE MIXIN IS NOT YET IMPLEMENTED
+import random
+import string
 from typing import Optional, List
 
-from pydantic import BaseModel, EmailStr, validator, Field
+from pydantic import BaseModel, validator, Field
 from uuid import UUID
 
 
@@ -33,12 +40,19 @@ from uuid import UUID
 #
 #
 ########################################################################################
+# Todo: Write logic 😛
+class LoginRequired:
+    pass
+
+
+########################################################################################
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 
 class TokenPayload(BaseModel):
+    # subject
     sub: Optional[UUID] = None
 
 
@@ -46,6 +60,7 @@ class TokenPayload(BaseModel):
 class _UserBase(BaseModel):
     display_name: Optional[str] = None
     is_active: Optional[bool] = True
+    # Todo: Secure is_superuser
     is_superuser: bool = False
 
 
@@ -54,7 +69,7 @@ class UserCreate(_UserBase):
     password: str
 
 
-class UserUpdate(_UserBase):
+class UserUpdate(_UserBase, LoginRequired):
     number: int  # Todo: Type: UserNumber
     password: Optional[int] = None
     number: int = None
@@ -66,10 +81,7 @@ class _UserInDBBase(_UserBase):
     number: int
 
     @validator("number")
-    def display_number(cls, v, values):
-        if int(v) < 1:
-            if values["display_name"] != "admin":
-                raise ValueError("Number must be greater than or equal to one.")
+    def display_number(cls, v):
         # 1 -> "0051", 10245 -> "10245"
         return str(v).zfill(4)
 
@@ -88,21 +100,27 @@ class UserInDB(_UserInDBBase):
 ########################################################################################
 class _RoomBase(BaseModel):
     is_active: Optional[bool] = True
+    # Todo: Add url property (Pydantic HttpUrl)
 
 
-class RoomCreate(_RoomBase):
-    code: Optional[str] = None
+class RoomCreate(_RoomBase, LoginRequired):
+    owner_id: UUID
+    code: str = Field(
+        default_factory=lambda: "".join(
+            random.choice(string.ascii_uppercase) for _ in range(5)
+        )
+    )
 
 
-class RoomUpdate(_RoomBase):
+class RoomUpdate(_RoomBase, LoginRequired):
     # Room events. Do these belong in a different area?
-
-    # The quiz url. Todo: Pydantic probably has a url type
-    start_quiz: Optional[str] = None
+    id: UUID
 
 
 class _RoomInDBBase(_RoomBase):
-    id: Optional[UUID] = None
+    id: UUID
+    owner_id: UUID
+    code: str
 
     class Config:
         orm_mode = True
@@ -121,26 +139,26 @@ class _AnswerBase(BaseModel):
     text: str
 
 
-class AnswerCreate(_AnswerBase):
+class AnswerCreate(_AnswerBase, LoginRequired):
     pass
 
 
-class AnswerUpdate(_AnswerBase):
+class AnswerUpdate(_AnswerBase, LoginRequired):
     pass
 
 
-class _AnswernInDBBase(_AnswerBase):
+class _AnswerInDBBase(_AnswerBase):
     id: Optional[UUID] = None
 
     class Config:
         orm_mode = True
 
 
-class AnswerPublic(_AnswernInDBBase):
+class AnswerPublic(_AnswerInDBBase):
     pass
 
 
-class AnswerInDB(_AnswernInDBBase):
+class AnswerInDB(_AnswerInDBBase):
     pass
 
 
@@ -149,11 +167,11 @@ class _QuestionBase(BaseModel):
     query: str
 
 
-class QuestionCreate(_QuestionBase):
+class QuestionCreate(_QuestionBase, LoginRequired):
     answers: List[AnswerCreate]
 
 
-class QuestionUpdate(_QuestionBase):
+class QuestionUpdate(_QuestionBase, LoginRequired):
     pass
 
 
@@ -175,24 +193,20 @@ class QuestionInDB(_QuestionInDBBase):
 ########################################################################################
 class _QuizBase(BaseModel):
     name: str
+
+
+class QuizCreate(_QuizBase, LoginRequired):
     owner: UUID = Field(alias="owner_id")
-
-
-class QuizCreate(_QuizBase):
     questions: Optional[List[QuestionCreate]]
 
 
-class QuizUpdate(_QuizBase):
+class QuizUpdate(_QuizBase, LoginRequired):
     id: UUID
-
-
-class QuizGet(_QuizBase):
-    # Todo: Why aren't getters part of the cookiecutter schema?
-    pass
 
 
 class _QuizInDBBase(_QuizBase):
     id: Optional[UUID] = None
+    owner: UUID = Field(alias="owner_id")
 
     class Config:
         orm_mode = True

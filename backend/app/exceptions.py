@@ -1,3 +1,6 @@
+from fastapi.exceptions import HTTPException
+
+
 class TuskyError(BaseException):
     """
     Base Exception for the Tusky application.
@@ -9,13 +12,19 @@ class TuskyError(BaseException):
         pass
 
 
-class AuthenticationError(TuskyError):
+class AuthenticationError(TuskyError, HTTPException):
     """ Base exception for errors resulting from authentication """
+
+    status_code = 400
 
 
 class UserDoesNotExist(AuthenticationError):
     """ Exception raised when user not found in database """
 
+    detail = "User does not exist"
+
 
 class IncorrectPassword(AuthenticationError):
     """ Exception raised when a user's password does not match """
+
+    detail = "Incorrect username or password"

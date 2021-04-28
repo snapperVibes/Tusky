@@ -11,7 +11,7 @@ from app import crud, models, schemas
 from app.core import settings, security
 from app.database import SessionLocal
 
-reusable_oauth2 = OAuth2PasswordBearer(
+_reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
 
@@ -25,7 +25,7 @@ def get_db() -> Generator:
 
 
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
+    db: Session = Depends(get_db), token: str = Depends(_reusable_oauth2)
 ) -> models.User:
     try:
         payload = jwt.decode(

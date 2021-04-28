@@ -3,8 +3,8 @@ from os import path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
+from app.core import settings
 from app.routes import router
 
 
@@ -14,11 +14,8 @@ _HERE = path.dirname(path.realpath(__file__))
 def init_app():
     app = FastAPI()
     app.include_router(router)
-    app.mount(
-        "/static", StaticFiles(directory=path.join(_HERE, "static")), name="static"
-    )
 
-    origins = ["http://localhost:8080"]
+    origins = settings.BACKEND_CORS_ORIGINS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,

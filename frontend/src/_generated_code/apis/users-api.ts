@@ -32,10 +32,10 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createUserApiV1UsersCreatePost: async (body: UserCreate, options: any = {}): Promise<RequestArgs> => {
+        createUser: async (body: UserCreate, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling createUserApiV1UsersCreatePost.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createUser.');
             }
             const localVarPath = `/api/v1/users/create`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -47,15 +47,6 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
-            // authentication OAuth2PasswordBearer required
-            // oauth required
-            if (configuration && configuration.accessToken) {
-                const localVarAccessTokenValue = typeof configuration.accessToken === 'function'
-                    ? await configuration.accessToken("OAuth2PasswordBearer", [])
-                    : await configuration.accessToken;
-                localVarHeaderParameter["Authorization"] = "Bearer " + localVarAccessTokenValue;
-            }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
@@ -79,20 +70,20 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Get By Name
+         * @summary Get User By Name
          * @param {string} name 
          * @param {number} number 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getByNameApiV1UsersGetByNameGet: async (name: string, number: number, options: any = {}): Promise<RequestArgs> => {
+        getUserByName: async (name: string, number: number, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'name' is not null or undefined
             if (name === null || name === undefined) {
-                throw new RequiredError('name','Required parameter name was null or undefined when calling getByNameApiV1UsersGetByNameGet.');
+                throw new RequiredError('name','Required parameter name was null or undefined when calling getUserByName.');
             }
             // verify required parameter 'number' is not null or undefined
             if (number === null || number === undefined) {
-                throw new RequiredError('number','Required parameter number was null or undefined when calling getByNameApiV1UsersGetByNameGet.');
+                throw new RequiredError('number','Required parameter number was null or undefined when calling getUserByName.');
             }
             const localVarPath = `/api/v1/users/get-by-name`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -135,7 +126,7 @@ export const UsersApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        readCurrentUserApiV1UsersMeGet: async (options: any = {}): Promise<RequestArgs> => {
+        readCurrentUser: async (options: any = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/users/me`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
@@ -188,8 +179,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createUserApiV1UsersCreatePost(body: UserCreate, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserPublic>> {
-            const localVarAxiosArgs = await UsersApiAxiosParamCreator(configuration).createUserApiV1UsersCreatePost(body, options);
+        async createUser(body: UserCreate, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserPublic>> {
+            const localVarAxiosArgs = await UsersApiAxiosParamCreator(configuration).createUser(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -197,14 +188,14 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get By Name
+         * @summary Get User By Name
          * @param {string} name 
          * @param {number} number 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getByNameApiV1UsersGetByNameGet(name: string, number: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserPublic>> {
-            const localVarAxiosArgs = await UsersApiAxiosParamCreator(configuration).getByNameApiV1UsersGetByNameGet(name, number, options);
+        async getUserByName(name: string, number: number, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserPublic>> {
+            const localVarAxiosArgs = await UsersApiAxiosParamCreator(configuration).getUserByName(name, number, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -216,8 +207,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async readCurrentUserApiV1UsersMeGet(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserPublic>> {
-            const localVarAxiosArgs = await UsersApiAxiosParamCreator(configuration).readCurrentUserApiV1UsersMeGet(options);
+        async readCurrentUser(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UserPublic>> {
+            const localVarAxiosArgs = await UsersApiAxiosParamCreator(configuration).readCurrentUser(options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -239,19 +230,19 @@ export const UsersApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createUserApiV1UsersCreatePost(body: UserCreate, options?: any): AxiosPromise<UserPublic> {
-            return UsersApiFp(configuration).createUserApiV1UsersCreatePost(body, options).then((request) => request(axios, basePath));
+        createUser(body: UserCreate, options?: any): AxiosPromise<UserPublic> {
+            return UsersApiFp(configuration).createUser(body, options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @summary Get By Name
+         * @summary Get User By Name
          * @param {string} name 
          * @param {number} number 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getByNameApiV1UsersGetByNameGet(name: string, number: number, options?: any): AxiosPromise<UserPublic> {
-            return UsersApiFp(configuration).getByNameApiV1UsersGetByNameGet(name, number, options).then((request) => request(axios, basePath));
+        getUserByName(name: string, number: number, options?: any): AxiosPromise<UserPublic> {
+            return UsersApiFp(configuration).getUserByName(name, number, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -259,8 +250,8 @@ export const UsersApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        readCurrentUserApiV1UsersMeGet(options?: any): AxiosPromise<UserPublic> {
-            return UsersApiFp(configuration).readCurrentUserApiV1UsersMeGet(options).then((request) => request(axios, basePath));
+        readCurrentUser(options?: any): AxiosPromise<UserPublic> {
+            return UsersApiFp(configuration).readCurrentUser(options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -280,20 +271,20 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public createUserApiV1UsersCreatePost(body: UserCreate, options?: any) {
-        return UsersApiFp(this.configuration).createUserApiV1UsersCreatePost(body, options).then((request) => request(this.axios, this.basePath));
+    public createUser(body: UserCreate, options?: any) {
+        return UsersApiFp(this.configuration).createUser(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
-     * @summary Get By Name
+     * @summary Get User By Name
      * @param {string} name 
      * @param {number} number 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getByNameApiV1UsersGetByNameGet(name: string, number: number, options?: any) {
-        return UsersApiFp(this.configuration).getByNameApiV1UsersGetByNameGet(name, number, options).then((request) => request(this.axios, this.basePath));
+    public getUserByName(name: string, number: number, options?: any) {
+        return UsersApiFp(this.configuration).getUserByName(name, number, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
@@ -302,7 +293,7 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public readCurrentUserApiV1UsersMeGet(options?: any) {
-        return UsersApiFp(this.configuration).readCurrentUserApiV1UsersMeGet(options).then((request) => request(this.axios, this.basePath));
+    public readCurrentUser(options?: any) {
+        return UsersApiFp(this.configuration).readCurrentUser(options).then((request) => request(this.axios, this.basePath));
     }
 }

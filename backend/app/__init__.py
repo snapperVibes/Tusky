@@ -25,7 +25,7 @@ def create_all(**kw):
     )
     try:
         with db:
-            owner = crud.user.create(db, obj_init=admin_obj)
+            owner = crud.user.create(db, obj_in=admin_obj)
             print("Admin created")
     except InternalError:
         with db:
@@ -56,7 +56,7 @@ def create_all(**kw):
     )
     try:
         with db:
-            crud.quiz.create(db, obj_init=quiz)
+            crud.quiz.create(db, obj_in=quiz)
             print("Example quiz created")
     except IntegrityError:
         print("Example quiz already exists")

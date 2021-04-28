@@ -12,5 +12,6 @@
  * Do not edit the class manually.
  */export * from './apis/login-api';
 export * from './apis/quizzes-api';
+export * from './apis/rooms-api';
 export * from './apis/users-api';
 

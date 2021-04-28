@@ -34,10 +34,10 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createQuizApiV1QuizzesCreatePost: async (body: QuizCreate, options: any = {}): Promise<RequestArgs> => {
+        createQuiz: async (body: QuizCreate, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling createQuizApiV1QuizzesCreatePost.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createQuiz.');
             }
             const localVarPath = `/api/v1/quizzes/create`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -82,19 +82,19 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get Full Quiz
-         * @param {string} name 
+         * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getFullQuizApiV1QuizzesGetGet: async (name: string, ownerId: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'name' is not null or undefined
-            if (name === null || name === undefined) {
-                throw new RequiredError('name','Required parameter name was null or undefined when calling getFullQuizApiV1QuizzesGetGet.');
+        getFullQuiz: async (quizName: string, ownerId: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'quizName' is not null or undefined
+            if (quizName === null || quizName === undefined) {
+                throw new RequiredError('quizName','Required parameter quizName was null or undefined when calling getFullQuiz.');
             }
             // verify required parameter 'ownerId' is not null or undefined
             if (ownerId === null || ownerId === undefined) {
-                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getFullQuizApiV1QuizzesGetGet.');
+                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getFullQuiz.');
             }
             const localVarPath = `/api/v1/quizzes/get`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -107,8 +107,8 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            if (name !== undefined) {
-                localVarQueryParameter['name'] = name;
+            if (quizName !== undefined) {
+                localVarQueryParameter['quiz_name'] = quizName;
             }
 
             if (ownerId !== undefined) {
@@ -134,19 +134,19 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get Quiz Title
-         * @param {string} name 
+         * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getQuizTitleApiV1QuizzesGetTitleGet: async (name: string, ownerId: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'name' is not null or undefined
-            if (name === null || name === undefined) {
-                throw new RequiredError('name','Required parameter name was null or undefined when calling getQuizTitleApiV1QuizzesGetTitleGet.');
+        getQuizTitle: async (quizName: string, ownerId: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'quizName' is not null or undefined
+            if (quizName === null || quizName === undefined) {
+                throw new RequiredError('quizName','Required parameter quizName was null or undefined when calling getQuizTitle.');
             }
             // verify required parameter 'ownerId' is not null or undefined
             if (ownerId === null || ownerId === undefined) {
-                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getQuizTitleApiV1QuizzesGetTitleGet.');
+                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getQuizTitle.');
             }
             const localVarPath = `/api/v1/quizzes/getTitle`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -159,8 +159,8 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            if (name !== undefined) {
-                localVarQueryParameter['name'] = name;
+            if (quizName !== undefined) {
+                localVarQueryParameter['quiz_name'] = quizName;
             }
 
             if (ownerId !== undefined) {
@@ -190,10 +190,10 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateQuizApiV1QuizzesUpdatePut: async (body: QuizUpdate, options: any = {}): Promise<RequestArgs> => {
+        updateQuiz: async (body: QuizUpdate, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling updateQuizApiV1QuizzesUpdatePut.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling updateQuiz.');
             }
             const localVarPath = `/api/v1/quizzes/update`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -242,8 +242,8 @@ export const QuizzesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createQuizApiV1QuizzesCreatePost(body: QuizCreate, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
-            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).createQuizApiV1QuizzesCreatePost(body, options);
+        async createQuiz(body: QuizCreate, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).createQuiz(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -252,13 +252,13 @@ export const QuizzesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get Full Quiz
-         * @param {string} name 
+         * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getFullQuizApiV1QuizzesGetGet(name: string, ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
-            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getFullQuizApiV1QuizzesGetGet(name, ownerId, options);
+        async getFullQuiz(quizName: string, ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getFullQuiz(quizName, ownerId, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -267,13 +267,13 @@ export const QuizzesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get Quiz Title
-         * @param {string} name 
+         * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getQuizTitleApiV1QuizzesGetTitleGet(name: string, ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelObject>> {
-            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getQuizTitleApiV1QuizzesGetTitleGet(name, ownerId, options);
+        async getQuizTitle(quizName: string, ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelObject>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getQuizTitle(quizName, ownerId, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -286,8 +286,8 @@ export const QuizzesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async updateQuizApiV1QuizzesUpdatePut(body: QuizUpdate, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
-            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).updateQuizApiV1QuizzesUpdatePut(body, options);
+        async updateQuiz(body: QuizUpdate, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).updateQuiz(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -309,30 +309,30 @@ export const QuizzesApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createQuizApiV1QuizzesCreatePost(body: QuizCreate, options?: any): AxiosPromise<QuizPublic> {
-            return QuizzesApiFp(configuration).createQuizApiV1QuizzesCreatePost(body, options).then((request) => request(axios, basePath));
+        createQuiz(body: QuizCreate, options?: any): AxiosPromise<QuizPublic> {
+            return QuizzesApiFp(configuration).createQuiz(body, options).then((request) => request(axios, basePath));
         },
         /**
          * 
          * @summary Get Full Quiz
-         * @param {string} name 
+         * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getFullQuizApiV1QuizzesGetGet(name: string, ownerId: string, options?: any): AxiosPromise<QuizPublic> {
-            return QuizzesApiFp(configuration).getFullQuizApiV1QuizzesGetGet(name, ownerId, options).then((request) => request(axios, basePath));
+        getFullQuiz(quizName: string, ownerId: string, options?: any): AxiosPromise<QuizPublic> {
+            return QuizzesApiFp(configuration).getFullQuiz(quizName, ownerId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
          * @summary Get Quiz Title
-         * @param {string} name 
+         * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getQuizTitleApiV1QuizzesGetTitleGet(name: string, ownerId: string, options?: any): AxiosPromise<ModelObject> {
-            return QuizzesApiFp(configuration).getQuizTitleApiV1QuizzesGetTitleGet(name, ownerId, options).then((request) => request(axios, basePath));
+        getQuizTitle(quizName: string, ownerId: string, options?: any): AxiosPromise<ModelObject> {
+            return QuizzesApiFp(configuration).getQuizTitle(quizName, ownerId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -341,8 +341,8 @@ export const QuizzesApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateQuizApiV1QuizzesUpdatePut(body: QuizUpdate, options?: any): AxiosPromise<QuizPublic> {
-            return QuizzesApiFp(configuration).updateQuizApiV1QuizzesUpdatePut(body, options).then((request) => request(axios, basePath));
+        updateQuiz(body: QuizUpdate, options?: any): AxiosPromise<QuizPublic> {
+            return QuizzesApiFp(configuration).updateQuiz(body, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -362,32 +362,32 @@ export class QuizzesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof QuizzesApi
      */
-    public createQuizApiV1QuizzesCreatePost(body: QuizCreate, options?: any) {
-        return QuizzesApiFp(this.configuration).createQuizApiV1QuizzesCreatePost(body, options).then((request) => request(this.axios, this.basePath));
+    public createQuiz(body: QuizCreate, options?: any) {
+        return QuizzesApiFp(this.configuration).createQuiz(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
      * @summary Get Full Quiz
-     * @param {string} name 
+     * @param {string} quizName 
      * @param {string} ownerId 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof QuizzesApi
      */
-    public getFullQuizApiV1QuizzesGetGet(name: string, ownerId: string, options?: any) {
-        return QuizzesApiFp(this.configuration).getFullQuizApiV1QuizzesGetGet(name, ownerId, options).then((request) => request(this.axios, this.basePath));
+    public getFullQuiz(quizName: string, ownerId: string, options?: any) {
+        return QuizzesApiFp(this.configuration).getFullQuiz(quizName, ownerId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
      * @summary Get Quiz Title
-     * @param {string} name 
+     * @param {string} quizName 
      * @param {string} ownerId 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof QuizzesApi
      */
-    public getQuizTitleApiV1QuizzesGetTitleGet(name: string, ownerId: string, options?: any) {
-        return QuizzesApiFp(this.configuration).getQuizTitleApiV1QuizzesGetTitleGet(name, ownerId, options).then((request) => request(this.axios, this.basePath));
+    public getQuizTitle(quizName: string, ownerId: string, options?: any) {
+        return QuizzesApiFp(this.configuration).getQuizTitle(quizName, ownerId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
@@ -397,7 +397,7 @@ export class QuizzesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof QuizzesApi
      */
-    public updateQuizApiV1QuizzesUpdatePut(body: QuizUpdate, options?: any) {
-        return QuizzesApiFp(this.configuration).updateQuizApiV1QuizzesUpdatePut(body, options).then((request) => request(this.axios, this.basePath));
+    public updateQuiz(body: QuizUpdate, options?: any) {
+        return QuizzesApiFp(this.configuration).updateQuiz(body, options).then((request) => request(this.axios, this.basePath));
     }
 }

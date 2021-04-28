@@ -10,7 +10,7 @@ from sqlalchemy.sql.schema import (
     CheckConstraint,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint
+from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint, ENUM
 from sqlalchemy.sql import functions
 from sqlalchemy.sql.sqltypes import (
     INT,
@@ -76,6 +76,10 @@ def UserFK(**kw):
     return C(UUID(as_uuid=True), FK("user.id"), nullable=False, **kw)
 
 
+def RoomFK(**kw):
+    return C(UUID(as_uuid=True), FK("room.id"), nullable=False, **kw)
+
+
 def QuizFK(**kw):
     return C(UUID(as_uuid=True), FK("quiz.id"), nullable=False, **kw)
 
@@ -110,7 +114,7 @@ class User(Base):
         nullable=False,
     )
     # Todo: Number validation
-    number = C(INT, nullable=False)
+    number = C(INT)  # Number starts as null, but is immediately set to the next number
     hashed_password = C(TEXT, nullable=False)
     is_superuser = C(BOOL, default=False, nullable=False)
     is_active = C(BOOL, default=True)
@@ -123,15 +127,29 @@ class User(Base):
         return self.display_name + "#" + str(self.number).zfill(4)
 
 
-class Room:
+class Room(Base):
     # Guarantees unique room code (of currently active rooms).
     # Two rooms can not share the same code if they are both active.
     # Todo: add time component so people can't get the same room right after each other
-    __table_args__ = (ExcludeConstraint(("code", "="), where=(text("active = TRUE"))),)
+    __table_args__ = (
+        ExcludeConstraint(("code", "="), where=(text("is_active = TRUE"))),
+    )
     id = ID()
     ts = TS()
     code = C(TEXT, nullable=False)
-    active = C(BOOL)
+    is_active = C(BOOL)
+
+
+class RoomRoleEnum(enum.Enum):
+    OWNER = ...
+    PLEBEIAN = ...
+
+
+class UserRoomRoleLink(Base):
+    __tablename__ = "link__user__room"
+    user_id = UserFK(primary_key=True)
+    room_fk = RoomFK(primary_key=True)
+    role = C(ENUM(RoomRoleEnum), nullable=False, primary_key=True)
 
 
 class Quiz(Base):

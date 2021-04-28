@@ -1,8 +1,14 @@
-import axios from "axios";
+import {LoginApi, RoomsApi, UsersApi} from "@/_generated_code";
 
-const apiUrl = "http://localhost:8000/api/v1";
+// TODO: COMPLETE OVERHAUL OF API SYSTEM
+// The generated code doesn't work how I envisioned.
+// For example
+// {displayName: "asdf"} should work; the types support this.
+// However, the code passes the literal "displayName" to the server instead of changing
+// it back to "display_name"
 
-function authHeaders(token: string) {
+
+export function authHeaders(token: string) {
   return {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -10,34 +16,20 @@ function authHeaders(token: string) {
   };
 }
 
-export const api = {
-  async getUser(name: string, number: any) {
-    return axios.get(`${apiUrl}/users/get-by-name`, {
-      params: {
-        name: name,
-        number: number
-      },
-    });
-  },
-
-  async getQuiz(name: string, owner_id: string) {
-    return axios.get(`${apiUrl}/quizzes/get`, {
-      params: {
-        name: name,
-        owner_id: owner_id,
-      },
-    });
-  },
-
-  async modifyQuiz(id: string, name: string, owner_id: string) {
-    return axios.put(`${apiUrl}/quizzes/update`, {
-      id: id,
-      name: name,
-      owner_id: owner_id
-    });
-
+export function displayError(err: any) {
+  const message = err.response.data.detail;
+  if (message !== undefined){
+    alert(err.response.data.detail)
   }
-};
+  // Todo: Set up an API Endpoint to log this happens
+  alert("Something went wrong.")
+}
 
-export * from "./_generated_code/api"
+// export * from "@/_generated_code/api";
+
+
 // export * from "./configuration";
+
+export const roomsApi = new RoomsApi()
+export const usersApi = new UsersApi()
+export const loginApi = new LoginApi()

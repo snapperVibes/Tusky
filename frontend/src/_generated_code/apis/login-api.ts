@@ -17,7 +17,6 @@ import { Configuration } from '../configuration';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
 import { HTTPValidationError } from '../models';
-import { ModelObject } from '../models';
 import { Token } from '../models';
 /**
  * LoginApi - axios parameter creator
@@ -25,40 +24,6 @@ import { Token } from '../models';
  */
 export const LoginApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
-        /**
-         * 
-         * @summary Home
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        homeApiV1Get: async (options: any = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.query) {
-                query.set(key, options.query[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
-        },
         /**
          * OAuth2 compatible token login, get an access token for future requests
          * @summary Login Access Token
@@ -71,30 +36,30 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        loginAccessTokenApiV1LoginAccessTokenPost: async (grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options: any = {}): Promise<RequestArgs> => {
+        loginAccessToken: async (grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'grantType' is not null or undefined
             if (grantType === null || grantType === undefined) {
-                throw new RequiredError('grantType','Required parameter grantType was null or undefined when calling loginAccessTokenApiV1LoginAccessTokenPost.');
+                throw new RequiredError('grantType','Required parameter grantType was null or undefined when calling loginAccessToken.');
             }
             // verify required parameter 'username' is not null or undefined
             if (username === null || username === undefined) {
-                throw new RequiredError('username','Required parameter username was null or undefined when calling loginAccessTokenApiV1LoginAccessTokenPost.');
+                throw new RequiredError('username','Required parameter username was null or undefined when calling loginAccessToken.');
             }
             // verify required parameter 'password' is not null or undefined
             if (password === null || password === undefined) {
-                throw new RequiredError('password','Required parameter password was null or undefined when calling loginAccessTokenApiV1LoginAccessTokenPost.');
+                throw new RequiredError('password','Required parameter password was null or undefined when calling loginAccessToken.');
             }
             // verify required parameter 'scope' is not null or undefined
             if (scope === null || scope === undefined) {
-                throw new RequiredError('scope','Required parameter scope was null or undefined when calling loginAccessTokenApiV1LoginAccessTokenPost.');
+                throw new RequiredError('scope','Required parameter scope was null or undefined when calling loginAccessToken.');
             }
             // verify required parameter 'clientId' is not null or undefined
             if (clientId === null || clientId === undefined) {
-                throw new RequiredError('clientId','Required parameter clientId was null or undefined when calling loginAccessTokenApiV1LoginAccessTokenPost.');
+                throw new RequiredError('clientId','Required parameter clientId was null or undefined when calling loginAccessToken.');
             }
             // verify required parameter 'clientSecret' is not null or undefined
             if (clientSecret === null || clientSecret === undefined) {
-                throw new RequiredError('clientSecret','Required parameter clientSecret was null or undefined when calling loginAccessTokenApiV1LoginAccessTokenPost.');
+                throw new RequiredError('clientSecret','Required parameter clientSecret was null or undefined when calling loginAccessToken.');
             }
             const localVarPath = `/api/v1/login/access-token`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -160,19 +125,6 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
 export const LoginApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * 
-         * @summary Home
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async homeApiV1Get(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelObject>> {
-            const localVarAxiosArgs = await LoginApiAxiosParamCreator(configuration).homeApiV1Get(options);
-            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
-                const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
-                return axios.request(axiosRequestArgs);
-            };
-        },
-        /**
          * OAuth2 compatible token login, get an access token for future requests
          * @summary Login Access Token
          * @param {string} grantType 
@@ -184,8 +136,8 @@ export const LoginApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async loginAccessTokenApiV1LoginAccessTokenPost(grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Token>> {
-            const localVarAxiosArgs = await LoginApiAxiosParamCreator(configuration).loginAccessTokenApiV1LoginAccessTokenPost(grantType, username, password, scope, clientId, clientSecret, options);
+        async loginAccessToken(grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Token>> {
+            const localVarAxiosArgs = await LoginApiAxiosParamCreator(configuration).loginAccessToken(grantType, username, password, scope, clientId, clientSecret, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -201,15 +153,6 @@ export const LoginApiFp = function(configuration?: Configuration) {
 export const LoginApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * 
-         * @summary Home
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        homeApiV1Get(options?: any): AxiosPromise<ModelObject> {
-            return LoginApiFp(configuration).homeApiV1Get(options).then((request) => request(axios, basePath));
-        },
-        /**
          * OAuth2 compatible token login, get an access token for future requests
          * @summary Login Access Token
          * @param {string} grantType 
@@ -221,8 +164,8 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        loginAccessTokenApiV1LoginAccessTokenPost(grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options?: any): AxiosPromise<Token> {
-            return LoginApiFp(configuration).loginAccessTokenApiV1LoginAccessTokenPost(grantType, username, password, scope, clientId, clientSecret, options).then((request) => request(axios, basePath));
+        loginAccessToken(grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options?: any): AxiosPromise<Token> {
+            return LoginApiFp(configuration).loginAccessToken(grantType, username, password, scope, clientId, clientSecret, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -234,16 +177,6 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
  * @extends {BaseAPI}
  */
 export class LoginApi extends BaseAPI {
-    /**
-     * 
-     * @summary Home
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof LoginApi
-     */
-    public homeApiV1Get(options?: any) {
-        return LoginApiFp(this.configuration).homeApiV1Get(options).then((request) => request(this.axios, this.basePath));
-    }
     /**
      * OAuth2 compatible token login, get an access token for future requests
      * @summary Login Access Token
@@ -257,7 +190,7 @@ export class LoginApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof LoginApi
      */
-    public loginAccessTokenApiV1LoginAccessTokenPost(grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options?: any) {
-        return LoginApiFp(this.configuration).loginAccessTokenApiV1LoginAccessTokenPost(grantType, username, password, scope, clientId, clientSecret, options).then((request) => request(this.axios, this.basePath));
+    public loginAccessToken(grantType: string, username: string, password: string, scope: string, clientId: string, clientSecret: string, options?: any) {
+        return LoginApiFp(this.configuration).loginAccessToken(grantType, username, password, scope, clientId, clientSecret, options).then((request) => request(this.axios, this.basePath));
     }
 }

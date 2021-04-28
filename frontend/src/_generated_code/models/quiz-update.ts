@@ -28,11 +28,5 @@ export interface QuizUpdate {
      * @type {string}
      * @memberof QuizUpdate
      */
-    ownerId: any;
-    /**
-     * 
-     * @type {string}
-     * @memberof QuizUpdate
-     */
     id: any;
 }
