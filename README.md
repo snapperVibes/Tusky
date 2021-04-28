@@ -40,10 +40,7 @@ There are 4 important parts of a FastAPI application:
   - VueJS (With Axios)
 
 [comment]: <> (
-## Misc
-### A user signs in. Then what happens?
-  - After hitting the login button, a request is made to the backend with the user's details
-  - When
+ -- Misc: A user signs in, then what?
 )
 
 [comment]: <> (
