@@ -8,11 +8,20 @@ from result import Ok, Err, Result
 from sqlalchemy import DDL, event, desc, text, bindparam, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import CursorResult
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.exc import (
+    NoResultFound as sqlalchemy_NoResultFound,
+    MultipleResultsFound as sqlalchemy_MultipleResultsFound,
+)
 from sqlalchemy.orm import Session
 
 from app.core import security
-from app.exceptions import UserDoesNotExist, IncorrectPassword
+from app.exceptions import (
+    UserNotFound,
+    IncorrectPassword,
+    ActiveRoomNotFound,
+    InvalidRequestError,
+    QuizNotFound,
+)
 from app.models import Base, User, Quiz, Question, Answer, Room
 from app.schemas import (
     UserCreate,
@@ -121,17 +130,16 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
                 "display_name": obj_in.display_name,
                 "hashed_password": hashed_password,
                 "is_superuser": obj_in.is_superuser,
-                "identifier_name": identifier_name
-            }
+                "identifier_name": identifier_name,
+            },
         )
         db.commit()
         row = cursor.mappings().one()
         return User(**row)
 
-
     def get_by_name(
         self, db: Session, *, name: str, number: Optional[int] = None
-    ) -> Result[User, UserDoesNotExist]:
+    ) -> Result[User, UserNotFound]:
         # Allows a name to be passed as
         # name='exampleuser#1234' or name='exampleuser', number=1234
         _name, _, _number = name.partition("#")
@@ -145,18 +153,19 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
             pass
 
         normalized_name = security.to_identifier(_name)
+        # Todo: normalize errors. Maybe use "one" instead of "one or none"?
         _user = (
             db.query(User)
             .filter(User.identifier_name == normalized_name, User.number == number)
             .one_or_none()
         )
         if _user is None:
-            return Err(UserDoesNotExist)
+            return Err(UserNotFound)
         return Ok(_user)
 
     def authenticate(
         self, db: Session, *, username: str, password: str
-    ) -> Result[User, Union[UserDoesNotExist, IncorrectPassword]]:
+    ) -> Result[User, Union[UserNotFound, IncorrectPassword]]:
         user_result = self.get_by_name(db, name=username)
         if user := user_result.ok():
             pass
@@ -213,7 +222,6 @@ event.listen(
 )
 
 
-
 class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
     def create(self, db: Session, *, obj_in: QuizCreate) -> Quiz:
         # Todo: Learn SQLAlchemy relations; it handles getting foreign keys for us
@@ -244,19 +252,22 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
 
     def get_basics(
         self, db: Session, *, quiz_name: str, owner_id: UUID
-    ) -> Result[Quiz, Union[UserDoesNotExist, NoResultFound, MultipleResultsFound]]:
+    ) -> Result[Quiz, Union[InvalidRequestError, QuizNotFound]]:
         try:
-            return Ok(
+            quiz = (
                 db.query(self.model)
                 .filter(User.id == owner_id, Quiz.name == quiz_name)
-                .one()
+                .one_or_none()
             )
-        except (NoResultFound, MultipleResultsFound) as InvalidRequest:
-            return Err(InvalidRequest)
+        except (sqlalchemy_MultipleResultsFound) as err:
+            return Err(InvalidRequestError(from_=err))
+        if quiz is None:
+            return Err(QuizNotFound)
+        return Ok(quiz)
 
     def get_full(
         self, db: Session, *, quiz_name: str, owner_id: UUID
-    ) -> Result[Quiz, Union[UserDoesNotExist, NoResultFound, MultipleResultsFound]]:
+    ) -> Result[Quiz, Union[InvalidRequestError, QuizNotFound],]:
         quiz_result = self.get_basics(db, quiz_name=quiz_name, owner_id=owner_id)
         if _quiz := quiz_result.ok():
             pass
@@ -275,13 +286,20 @@ quiz = CRUDQuiz(Quiz)
 class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
     def get_by_code(
         self, db: Session, *, code: str
-    ) -> Result[Room, Union[NoResultFound, MultipleResultsFound]]:
+    ) -> Result[Room, Union[sqlalchemy_NoResultFound, sqlalchemy_MultipleResultsFound]]:
         try:
             return Ok(
                 db.query(Room).filter(Room.code == code, Room.is_active == True).one()
             )
-        except (NoResultFound, MultipleResultsFound) as InvalidRequest:
-            return Err(InvalidRequest)
+        except (
+            sqlalchemy_NoResultFound,
+            sqlalchemy_MultipleResultsFound,
+        ) as err:
+            # I am excited for pattern matching in Python 3.10!
+            if type(err) == sqlalchemy_NoResultFound:
+                return Err(ActiveRoomNotFound(from_=err))
+            if type(err) == sqlalchemy_MultipleResultsFound:
+                return Err(InvalidRequestError(from_=err))
 
 
 room = CRUDRoom(Room)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import schemas, models, crud
@@ -29,6 +29,8 @@ def get_room_by_code(*, db: Session = Depends(deps.get_db), code: str):
     if room := room_result.ok():
         pass
     else:
+        print("\n" * 5)
+        print(room_result.err())
         raise room_result.err()
     return room
 
