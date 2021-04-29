@@ -13,17 +13,24 @@
 </template>
 
 <script>
-import { roomsApi } from "@/api";
+import { roomsApi, authHeaders, usersApi } from "@/api";
 
 export default {
   name: "CreateRoom",
   methods: {
-    createRoom: function (clickEvent) {
-      roomsApi.createRoom({}).then(function (res) {
-        const room = res.data;
-        window.location.href = `http://localhost:8080/room/${room.code}`;
-      });
+    createRoom: async function (clickEvent) {
+      const authHeader = authHeaders(this.authToken);
+      const response = await roomsApi.createRoom(
+        { owner_id: this.ownerId },
+        authHeader
+      );
+      const room = response.data;
+      window.location.href = `http://localhost:8080/room/${room.code}`;
     },
+  },
+  props: {
+    ownerId: String,
+    authToken: String,
   },
 };
 </script>

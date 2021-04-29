@@ -138,6 +138,7 @@ class Room(Base):
     ts = TS()
     code = C(TEXT, nullable=False)
     is_active = C(BOOL)
+    owner_id = UserFK()
 
 
 class RoomRoleEnum(enum.Enum):

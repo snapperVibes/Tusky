@@ -1,18 +1,21 @@
 <template>
-  <h1>Room</h1>
-  <Quiz />
+  <div class="room">
+    <h1>Room {{ roomcode }}</h1>
+    <!--    <Quiz />-->
+  </div>
 </template>
 
 <script>
-import { Options, Vue } from "vue-class-component";
-import Quiz from "@/components/room/quiz/Quiz";
+// import Quiz from "@/components/room/quiz/Quiz";
 
-@Options({
-  components: {
-    Quiz,
+export default {
+  props: {
+    roomcode: String,
   },
-})
-export default class Room extends Vue {}
+  //   components: {
+  //     Quiz,
+  //   },
+};
 </script>
 
 <style scoped></style>

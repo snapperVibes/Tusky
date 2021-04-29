@@ -6,12 +6,11 @@
 
 <script lang="ts">
 import HomePage from "../components/HomePage.vue"; // @ is an alias to /src
-import { Options, Vue } from "vue-class-component";
 
-@Options({
+export default {
+  name: "Home",
   components: {
     HomePage,
   },
-})
-export default class Home extends Vue {}
+};
 </script>

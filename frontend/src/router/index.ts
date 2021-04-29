@@ -26,6 +26,14 @@ const routes: Array<RouteRecordRaw> = [
     name: "Editor2",
     component: () =>
       import(/* webpackChunkName: "editor2" */ "../views/Editor2.vue"),
+  },
+  {
+    path: "/room/:roomcode",
+    name: "Room",
+    props: true,
+    component: () =>
+      import(/* webpackChunkName: "roomview" */ "../views/RoomView.vue")
+
   }
 ];
 

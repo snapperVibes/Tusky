@@ -17,18 +17,23 @@ export function authHeaders(token: string) {
 }
 
 export function displayError(err: any) {
-  const message = err.response.data.detail;
-  if (message !== undefined){
+  // Raises an "alert" with the error detailed by the api.
+  // Malformed errors just say "Something went wrong".
+  const malformedMessage = function () {
+    const message = err.response.data.detail;
+    if (message === undefined) {
+      return true
+    }
+    if (message == "[object Object]") {
+      return true
+    }
     alert(err.response.data.detail)
+  }()
+  if (malformedMessage) {
+    // Todo: Set up an API Endpoint to log this happens
+    alert("Something went wrong")
   }
-  // Todo: Set up an API Endpoint to log this happens
-  alert("Something went wrong.")
 }
-
-// export * from "@/_generated_code/api";
-
-
-// export * from "./configuration";
 
 export const roomsApi = new RoomsApi()
 export const usersApi = new UsersApi()

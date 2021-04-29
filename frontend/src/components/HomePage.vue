@@ -1,10 +1,10 @@
 <!--TODO: Refactor forms into components-->
 <template>
-  <NavBar :username="username" />
-  <h1>Tusky</h1>
+  <NavBar :username="username" :number="number" />
+  <!--  <h1>Tusky</h1>-->
   <RegistrationAndLogin @authTokenUpdate="onAuthTokenUpdate" />
   <EnterRoom />
-  <CreateRoom />
+  <CreateRoom :owner-id="userId" :auth-token="authToken" />
 </template>
 
 <script>
@@ -25,15 +25,20 @@ export default {
   data: function () {
     return {
       authToken: null,
+      userId: null,
       username: null,
+      number: null,
     };
   },
   methods: {
     onAuthTokenUpdate: async function (authToken) {
       this.authToken = authToken;
-      const authHeader = authHeaders(authToken);
+      const authHeader = authHeaders(this.authToken);
       const response = await usersApi.readCurrentUser(authHeader);
-      this.username = response.data.display_name;
+      const data = response.data;
+      this.userId = data.id;
+      this.username = data.display_name;
+      this.number = data.number;
     },
   },
 };
