@@ -34,11 +34,14 @@ class TuskyError(fastapi_HTTPException):
     #       >>>    return Err(ExampleDoesNotExist(from_= err))
 
     def __init__(self, from_: Optional[BaseException] = None):
-        """ Automatically logs errors """
+        """ Base Exception for all errors from Tusky """
+        # Todo: automatically log errors
         if from_:
             self.__cause__ = from_
-        status_code: int = NotImplemented
-        detail = "Something went wrong."
+        super().__init__(status_code=self.status_code, detail=self.detail)
+
+    status_code: int
+    detail = "Something went wrong."
 
 
 ########################################################################################
@@ -58,7 +61,7 @@ class IncorrectPassword(AuthenticationError):
 class InvalidRequestError(TuskyError):
     """ Base exceptions for errors deriving from sqlalchemy's Invalid Request Errors. """
 
-    status_code = 404
+    status_code = status.HTTP_404_NOT_FOUND
     detail = "No result found."
 
 

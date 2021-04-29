@@ -1,37 +1,41 @@
 <template>
-  <form v-show="!loggedIn">
-    <fieldset>
-      <legend>Login / Register</legend>
-      <label for="username-input"></label>
-      <input
-        type="text"
-        placeholder="Username"
-        id="username-input"
-        v-model="usernameInput"
-      />
-      <br />
-      <label for="password-input"></label>
-      <input
-        type="password"
-        placeholder="Password"
-        id="password-input"
-        v-model="passwordInput"
-      />
-      <br />
-      <input
-        @click.prevent="loginEvent"
-        class="button"
-        type="submit"
-        value="Login"
-      />
-      <input
-        @click.prevent="registerEvent"
-        class="button"
-        type="submit"
-        value="Register"
-      />
-    </fieldset>
-  </form>
+  <v-form v-show="!loggedIn">
+    <!--    <fieldset>-->
+    <!--      <legend>Login / Register</legend>-->
+    <label for="username-input"></label>
+    <input
+      type="text"
+      placeholder="Username"
+      id="username-input"
+      v-model="usernameInput"
+      minlength="1"
+      required
+    />
+    <br />
+    <label for="password-input"></label>
+    <input
+      type="password"
+      placeholder="Password"
+      id="password-input"
+      v-model="passwordInput"
+      required
+      minlength="1"
+    />
+    <br />
+    <input
+      v-bind:onclick="loginEvent"
+      class="button"
+      type="submit"
+      value="Login"
+    />
+    <!--    <input-->
+    <!--      @click.prevent="registerEvent"-->
+    <!--      class="button"-->
+    <!--      type="submit"-->
+    <!--      value="Register"-->
+    <!--    />-->
+    <!--    </fieldset>-->
+  </v-form>
 </template>
 
 <script>
