@@ -19,20 +19,33 @@ export function authHeaders(token: string) {
 export function displayError(err: any) {
   // Raises an "alert" with the error detailed by the api.
   // Malformed errors just say "Something went wrong".
-  const malformedMessage = function () {
-    const message = err.response.data.detail;
+
+  const [msg, malformed] = function () {
+    let message: string | undefined
+    try {
+      message = err.response.data.detail;
+    }
+    catch (err){
+      console.log("Something unexpected went wrong", err)
+      return [message, true]
+    }
     if (message === undefined) {
-      return true
+      console.log("Message detail was undefined")
+      return [message, true]
     }
-    if (message == "[object Object]") {
-      return true
+    if (message.includes("[object Object]")) {
+      console.log("The message contained JavaScript", message)
+      return [message, true]
     }
-    alert(err.response.data.detail)
+    return [message, false]
   }()
-  if (malformedMessage) {
+
+  if (malformed) {
     // Todo: Set up an API Endpoint to log this happens
-    alert("Something went wrong")
+    alert("Something went wrong.")
+    return
   }
+  alert(msg)
 }
 
 export const roomsApi = new RoomsApi()
