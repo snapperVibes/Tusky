@@ -21,10 +21,7 @@ def create_user(
 
 @router.get("/get-by-name", response_model=schemas.UserPublic)
 def get_user_by_name(*, db: Session = Depends(deps.get_db), name: str, number: int):
-    user_result = crud.user.get_by_name(db=db, name=name, number=number)
-    if user := user_result.ok():
-        return user
-    raise user.err()
+    return crud.user.get_by_name(db=db, name=name, number=number)
 
 
 @router.get("/me", response_model=schemas.UserPublic)

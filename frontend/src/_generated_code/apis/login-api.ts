@@ -25,7 +25,7 @@ import { Token } from '../models';
 export const LoginApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * OAuth2 compatible token login, get an access token for future requests
+         * OAuth2 compatible token login, get an access token for future requests  Raises: Http404UserNotFound, Http400IncorrectPassword
          * @summary Login Access Token
          * @param {string} grantType 
          * @param {string} username 
@@ -125,7 +125,7 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
 export const LoginApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * OAuth2 compatible token login, get an access token for future requests
+         * OAuth2 compatible token login, get an access token for future requests  Raises: Http404UserNotFound, Http400IncorrectPassword
          * @summary Login Access Token
          * @param {string} grantType 
          * @param {string} username 
@@ -153,7 +153,7 @@ export const LoginApiFp = function(configuration?: Configuration) {
 export const LoginApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * OAuth2 compatible token login, get an access token for future requests
+         * OAuth2 compatible token login, get an access token for future requests  Raises: Http404UserNotFound, Http400IncorrectPassword
          * @summary Login Access Token
          * @param {string} grantType 
          * @param {string} username 
@@ -178,7 +178,7 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
  */
 export class LoginApi extends BaseAPI {
     /**
-     * OAuth2 compatible token login, get an access token for future requests
+     * OAuth2 compatible token login, get an access token for future requests  Raises: Http404UserNotFound, Http400IncorrectPassword
      * @summary Login Access Token
      * @param {string} grantType 
      * @param {string} username 

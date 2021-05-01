@@ -24,15 +24,13 @@ def create_room(
 
 
 @router.get("/get-by-code", response_model=schemas.RoomPublic)
-def get_room_by_code(*, db: Session = Depends(deps.get_db), code: str):
-    room_result = crud.room.get_by_code(db, code=code)
-    if room := room_result.ok():
-        pass
-    else:
-        print("\n" * 5)
-        print(room_result.err())
-        raise room_result.err()
-    return room
+def get_room_by_code(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+    code: str,
+):
+    return crud.room.get_by_code(db, code=code)
 
 
 @router.put("/update", response_model=schemas.RoomPublic)

@@ -1,4 +1,4 @@
-from typing import Optional
+# Todo: Exceptions are currently a mess. Clean up.
 
 from fastapi import status
 from fastapi.exceptions import HTTPException as fastapi_HTTPException
@@ -20,24 +20,14 @@ class TuskyError(fastapi_HTTPException):
     #  Be careful: Exceptions (will eventually) be logged.
     #  Don't do anything that (for example)
     #  would expose a plain-text passwords in the logs.
-    #
-    # Todo: Make a Tusky code-style document
-    # Some best practices:
-    #   DO:
-    #       >>> example_object_ = db.query(example_object_).one()
-    #       >>> if example_object_ is None:
-    #       >>>     return Err(ExampleDoesNotExist)
-    #   DON'T
-    #       >>>try:
-    #       >>>    example_object_ = db.query(example_object_).one_or_none()
-    #       >>>except sqlalchemy_InvalidRequestError as err:
-    #       >>>    return Err(ExampleDoesNotExist(from_= err))
 
-    def __init__(self, from_: Optional[BaseException] = None):
+    def __init__(self, status_code=None, detail=None):
         """ Base Exception for all errors from Tusky """
         # Todo: automatically log errors
-        if from_:
-            self.__cause__ = from_
+        if status_code:
+            self.status_code = status_code
+        if detail:
+            self.detail = detail
         super().__init__(status_code=self.status_code, detail=self.detail)
 
     status_code: int
@@ -51,33 +41,42 @@ class AuthenticationError(TuskyError):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
-class IncorrectPassword(AuthenticationError):
+class Http400IncorrectPassword(AuthenticationError):
     """ Exception raised when a user's password does not match """
 
     detail = "Incorrect username or password."
 
 
+class Http400InactiveUser(AuthenticationError):
+
+    detail = "Inactive user."
+
+
 ########################################################################################
-class InvalidRequestError(TuskyError):
+class Http404InvalidRequestError(TuskyError):
     """ Base exceptions for errors deriving from sqlalchemy's Invalid Request Errors. """
 
     status_code = status.HTTP_404_NOT_FOUND
     detail = "No result found."
 
 
-class UserNotFound(InvalidRequestError):
+class Http404UserNotFound(Http404InvalidRequestError):
     """ Exception raised when a user is not found in the database. """
 
     detail = "The requested user could not be found."
 
 
-class ActiveRoomNotFound(InvalidRequestError):
+class Http404ActiveRoomNotFound(Http404InvalidRequestError):
     """ Exception raised when an active room is not in the database. """
 
     detail = "The requested room does not exist or is no longer active."
 
 
-class QuizNotFound(InvalidRequestError):
+class Http404QuizNotFound(Http404InvalidRequestError):
     """ Exception raised when a quiz is not found in the database. """
 
     detail = "The requested quiz could not be found"
+
+
+class IntegrityError(TuskyError):
+    pass

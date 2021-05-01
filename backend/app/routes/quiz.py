@@ -1,12 +1,13 @@
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app import schemas, models, crud
 from . import _depends as deps
 from ._depends import login_required
-
+from ..exceptions import Http404QuizNotFound
 
 router = APIRouter(
     prefix="/quizzes",
@@ -14,8 +15,7 @@ router = APIRouter(
 )
 
 
-# HUGE TODO: Although I'm 80% sure  get_current_active_user means that
-#       login is required, it would be best to check.
+# Todo: Assert permissions for posting quizzes on other people's accounts
 @login_required
 @router.post("/create", response_model=schemas.QuizPublic)
 def create_quiz(
@@ -24,28 +24,45 @@ def create_quiz(
     obj_in: schemas.QuizCreate,
     current_user: models.User = Depends(deps.get_current_active_user),
 ):
+    if current_user.id != obj_in.owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only post quizzes to your own account",
+        )
     return crud.quiz.create(db, obj_in=obj_in)
 
 
-@router.get("/getTitle")
-def get_quiz_title(
+@router.get("/getPreview", response_model=schemas.QuizPreview)
+def get_quiz_preview(
     *, db: Session = Depends(deps.get_db), quiz_name: str, owner_id: UUID
 ):
-    quiz_result = crud.quiz.get_basics(db, quiz_name=quiz_name, owner_id=owner_id)
-    if quiz := quiz_result.ok():
-        pass
-    else:
-        # Todo: Make this public facing
-        raise quiz_result.err()
-    if quiz.is_public:
-        return quiz
-    # Todo: Verification
-    return quiz
+    """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
+    return crud.quiz.get_previews(db, owner_id=owner_id, quiz_name=quiz_name)
+
+
+@router.get("/getPreviewsByUser", response_model=List[schemas.QuizPublic])
+def get_quiz_preview_by_user(
+    *,
+    db: Session = Depends(deps.get_db),
+    owner_id: UUID,
+):
+    return crud.quiz.get_previews_by_user(db, owner_id=owner_id)
+
+
+# Todo: Implement private quizzes
+# @router.get("/getMyPreviews", response_model=List[schemas.QuizPublic])
+# def get_my_quiz_previews(
+#     *,
+#     db: Session = Depends(deps.get_db),
+#     current_user: models.User = Depends(deps.get_current_active_user),
+# ):
+#     return crud.quiz.get_previews_by_user(
+#         db, owner_id=current_user.id, display_private=True
 
 
 @router.get("/get", response_model=schemas.QuizPublic)
 def get_full_quiz(
-    *, db: Session = Depends(deps.get_db), quiz_name: str, owner_id: UUID
+    *, db: Session = Depends(deps.get_db), owner_id: UUID, quiz_name: str
 ):
     # Todo: Figure out depends so we can have owner / name be a schema
     # Todo: Confirm quiz is public
@@ -66,8 +83,5 @@ def update_quiz(
     # if quiz_in.owner != quiz.owner_id:
     #     raise ValueError("The owner of the quiz does not match the owner provided")
     if not quiz:
-        raise HTTPException(status_code=404, detail="Item not found")
-    # if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
-    #     raise HTTPException(status_code=400, detail="Not enough permissions")
-    quiz = crud.quiz.update(db=db, db_obj=quiz, obj_in=obj_in)
-    return quiz
+        raise Http404QuizNotFound
+    return crud.quiz.update(db=db, db_obj=quiz, obj_in=obj_in)

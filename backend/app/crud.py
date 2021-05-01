@@ -4,23 +4,24 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from result import Ok, Err, Result
 from sqlalchemy import DDL, event, desc, text, bindparam, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import (
     NoResultFound as sqlalchemy_NoResultFound,
     MultipleResultsFound as sqlalchemy_MultipleResultsFound,
+    IntegrityError as sqlalchemy_IntegrityError,
 )
 from sqlalchemy.orm import Session
 
 from app.core import security
 from app.exceptions import (
-    UserNotFound,
-    IncorrectPassword,
-    ActiveRoomNotFound,
-    InvalidRequestError,
-    QuizNotFound,
+    Http404UserNotFound,
+    Http400IncorrectPassword,
+    Http404ActiveRoomNotFound,
+    Http404InvalidRequestError,
+    Http404QuizNotFound,
+    IntegrityError,
 )
 from app.models import Base, User, Quiz, Question, Answer, Room
 from app.schemas import (
@@ -30,6 +31,7 @@ from app.schemas import (
     QuizUpdate,
     RoomCreate,
     RoomUpdate,
+    QuestionCreate,
 )
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -59,7 +61,6 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def get(self, db: Session, id: Any) -> Optional[ModelType]:
-        print(id)
         return db.query(self.model).filter(self.model.id == id).first()
 
     def get_multi(
@@ -139,7 +140,8 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
 
     def get_by_name(
         self, db: Session, *, name: str, number: Optional[int] = None
-    ) -> Result[User, UserNotFound]:
+    ) -> User:
+        """ Raises: Http404UserNotFound """
         # Allows a name to be passed as
         # name='exampleuser#1234' or name='exampleuser', number=1234
         _name, _, _number = name.partition("#")
@@ -160,20 +162,15 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
             .one_or_none()
         )
         if _user is None:
-            return Err(UserNotFound)
-        return Ok(_user)
+            raise Http404UserNotFound
+        return _user
 
-    def authenticate(
-        self, db: Session, *, username: str, password: str
-    ) -> Result[User, Union[UserNotFound, IncorrectPassword]]:
-        user_result = self.get_by_name(db, name=username)
-        if user := user_result.ok():
-            pass
-        else:  # Propagate error
-            return user_result
+    def authenticate(self, db: Session, *, username: str, password: str) -> User:
+        """Raises: Http404UserNotFound, Http400IncorrectPassword"""
+        user = self.get_by_name(db, name=username)
         if not security.verify_password(password, user.hashed_password):
-            return Err(IncorrectPassword)
-        return Ok(user)
+            raise Http400IncorrectPassword
+        return user
 
     # Todo: Figure out point of method. It's in the cookiecutter so there has to be a
     #  point, right?
@@ -227,32 +224,60 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
         # Todo: Learn SQLAlchemy relations; it handles getting foreign keys for us
         db_quiz_obj = Quiz(name=obj_in.name, owner_id=obj_in.owner)
         db.add(db_quiz_obj)
-        db.flush()
+        try:
+            db.flush()
+        except sqlalchemy_IntegrityError as err:
+            raise IntegrityError(
+                status_code=400,
+                detail="Two quizzes by the same owner cannot have the same name.",
+            ) from err
         db.refresh(db_quiz_obj)
         # Add questions and answers
+        self._create_questions_and_answers(db, obj_in=obj_in, db_quiz_obj=db_quiz_obj)
+        db.commit()
+        db.refresh(db_quiz_obj)
+        return db_quiz_obj
+
+    def _create_questions_and_answers(
+        self, db: Session, *, obj_in: QuizCreate, db_quiz_obj: Quiz
+    ):
+        if not db_quiz_obj.questions:
+            return
         for _question in obj_in.questions:
             db_question_obj = Question(quiz_id=db_quiz_obj.id, query=_question.query)
             db.add(db_question_obj)
             db.flush()
             db.refresh(db_question_obj)
-            previous_answer_id = None
-            for _answer in _question.answers:
-                db_answer_obj = Answer(
-                    question_id=db_question_obj.id,
-                    text=_answer.text,
-                    previous_answer=previous_answer_id,
-                )
-                db.add(db_answer_obj)
-                db.flush()
-                db.refresh(db_answer_obj)
-                previous_answer_id = db_answer_obj.id
-        db.commit()
-        db.refresh(db_quiz_obj)
-        return db_quiz_obj
+            self._create_answers(
+                db,
+                obj_in=_question,
+                db_question_obj=db_question_obj,
+                previous_answer_id=None,
+            )
 
-    def get_basics(
-        self, db: Session, *, quiz_name: str, owner_id: UUID
-    ) -> Result[Quiz, Union[InvalidRequestError, QuizNotFound]]:
+    def _create_answers(
+        self,
+        db,
+        *,
+        obj_in: QuestionCreate,
+        db_question_obj: Question,
+        previous_answer_id: Optional[UUID],
+    ):
+        if not obj_in.answers:
+            return
+        for _answer in obj_in.answers:
+            db_answer_obj = Answer(
+                question_id=db_question_obj.id,
+                text=_answer.text,
+                previous_answer=previous_answer_id,
+            )
+            db.add(db_answer_obj)
+            db.flush()
+            db.refresh(db_answer_obj)
+            previous_answer_id = db_answer_obj.id
+
+    def get_previews(self, db: Session, *, owner_id: UUID, quiz_name: str) -> Quiz:
+        """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
         try:
             quiz = (
                 db.query(self.model)
@@ -260,35 +285,45 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
                 .one_or_none()
             )
         except (sqlalchemy_MultipleResultsFound) as err:
-            return Err(InvalidRequestError(from_=err))
+            raise Http404InvalidRequestError from err
         if quiz is None:
-            return Err(QuizNotFound)
-        return Ok(quiz)
+            raise Http404QuizNotFound
+        return quiz
 
-    def get_full(
-        self, db: Session, *, quiz_name: str, owner_id: UUID
-    ) -> Result[Quiz, Union[InvalidRequestError, QuizNotFound],]:
-        quiz_result = self.get_basics(db, quiz_name=quiz_name, owner_id=owner_id)
-        if _quiz := quiz_result.ok():
-            pass
-        else:
-            return Err(quiz_result.err())
-        questions = db.query(Question).filter(Question.quiz_id == _quiz.id).all()
+    def get_previews_by_user(
+        self,
+        db: Session,
+        *,
+        owner_id: UUID,
+    ) -> Quiz:
+        # Todo: Pagination
+        try:
+            quiz = db.query(self.model).filter(User.id == owner_id).all()
+        except (sqlalchemy_MultipleResultsFound) as err:
+            raise Http404InvalidRequestError from err
+        if quiz is None:
+            raise Http404QuizNotFound
+        return quiz
+
+    def get_full(self, db: Session, *, quiz_name: str, owner_id: UUID) -> Quiz:
+        """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
+
+        quiz_ = self.get_previews(db, owner_id=owner_id, quiz_name=quiz_name)
+        questions = db.query(Question).filter(Question.quiz_id == quiz_.id).all()
         for q in questions:
             q.answers = db.query(Answer).filter(Answer.question_id == q.id).all()
-        _quiz.questions = questions
-        return _quiz
+        quiz_.questions = questions
+        return quiz_
 
 
 quiz = CRUDQuiz(Quiz)
 
 
 class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
-    def get_by_code(
-        self, db: Session, *, code: str
-    ) -> Result[Room, Union[sqlalchemy_NoResultFound, sqlalchemy_MultipleResultsFound]]:
+    def get_by_code(self, db: Session, *, code: str) -> Room:
+        """ Raises: sqlalchemy_NoResultFound, sqlalchemy_MultipleResultsFound"""
         try:
-            return Ok(
+            return (
                 db.query(Room).filter(Room.code == code, Room.is_active == True).one()
             )
         except (
@@ -297,9 +332,8 @@ class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
         ) as err:
             # I am excited for pattern matching in Python 3.10!
             if type(err) == sqlalchemy_NoResultFound:
-                return Err(ActiveRoomNotFound(from_=err))
-            if type(err) == sqlalchemy_MultipleResultsFound:
-                return Err(InvalidRequestError(from_=err))
+                raise Http404ActiveRoomNotFound(from_=err)
+            raise Http404InvalidRequestError(from_=err)
 
 
 room = CRUDRoom(Room)

@@ -1,4 +1,5 @@
-import {LoginApi, RoomsApi, UsersApi} from "@/_generated_code";
+import {LoginApi, QuizzesApi, RoomsApi, UsersApi} from "@/_generated_code";
+import * as _schema from "@/_generated_code/models"
 
 // TODO: COMPLETE OVERHAUL OF API SYSTEM
 // The generated code doesn't work how I envisioned.
@@ -51,3 +52,6 @@ export function displayError(err: any) {
 export const roomsApi = new RoomsApi()
 export const usersApi = new UsersApi()
 export const loginApi = new LoginApi()
+export const quizzesApi = new QuizzesApi()
+// Todo: I know this isn't export correctly
+export const schema = _schema

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas, models, crud, settings, security
 from . import _depends as deps
-
+from ..exceptions import Http400InactiveUser
 
 router = APIRouter(
     tags=["login"],
@@ -26,18 +26,14 @@ def login_access_token(
 ):
     """
     OAuth2 compatible token login, get an access token for future requests
+
+    Raises: Http404UserNotFound, Http400IncorrectPassword
     """
     user = crud.user.authenticate(
         db, username=form_data.username, password=form_data.password
     )
-    # Todo: There's no point to using this if you don't actually use it correctly
-    if user := user.ok():
-        pass
-    # Todo: This is where pattern matching is to be used
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    elif not crud.user.is_active(user):
-        raise HTTPException(status_code=400, detail="Inactive user")
+    if not crud.user.is_active(user):
+        raise Http400InactiveUser
     access_token_expires = TimeDelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     # return the token
     return {

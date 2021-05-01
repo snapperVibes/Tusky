@@ -20,7 +20,7 @@
   color: #2c3e50;
 }
 
-#nav a.router-link-exact-active {
-  color: #42b983;
+.tusky__disabled-explanation {
+  color: grey;
 }
 </style>

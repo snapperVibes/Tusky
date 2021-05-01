@@ -192,7 +192,13 @@ class QuestionInDB(_QuestionInDBBase):
 
 ########################################################################################
 class _QuizBase(BaseModel):
+    # Todo: Verify length of 1
     name: str
+
+
+class QuizPreview(BaseModel):
+    id: UUID
+    owner: UUID
 
 
 class QuizCreate(_QuizBase, LoginRequired):

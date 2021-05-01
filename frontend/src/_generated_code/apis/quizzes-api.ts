@@ -17,8 +17,8 @@ import { Configuration } from '../configuration';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
 import { HTTPValidationError } from '../models';
-import { ModelObject } from '../models';
 import { QuizCreate } from '../models';
+import { QuizPreview } from '../models';
 import { QuizPublic } from '../models';
 import { QuizUpdate } from '../models';
 /**
@@ -82,21 +82,73 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get Full Quiz
+         * @param {string} ownerId 
+         * @param {string} quizName 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getFullQuiz: async (ownerId: string, quizName: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'ownerId' is not null or undefined
+            if (ownerId === null || ownerId === undefined) {
+                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getFullQuiz.');
+            }
+            // verify required parameter 'quizName' is not null or undefined
+            if (quizName === null || quizName === undefined) {
+                throw new RequiredError('quizName','Required parameter quizName was null or undefined when calling getFullQuiz.');
+            }
+            const localVarPath = `/api/v1/quizzes/get`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (ownerId !== undefined) {
+                localVarQueryParameter['owner_id'] = ownerId;
+            }
+
+            if (quizName !== undefined) {
+                localVarQueryParameter['quiz_name'] = quizName;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.query) {
+                query.set(key, options.query[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Raises: Http404InvalidRequestError, Http404QuizNotFound
+         * @summary Get Quiz Preview
          * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getFullQuiz: async (quizName: string, ownerId: string, options: any = {}): Promise<RequestArgs> => {
+        getQuizPreview: async (quizName: string, ownerId: string, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'quizName' is not null or undefined
             if (quizName === null || quizName === undefined) {
-                throw new RequiredError('quizName','Required parameter quizName was null or undefined when calling getFullQuiz.');
+                throw new RequiredError('quizName','Required parameter quizName was null or undefined when calling getQuizPreview.');
             }
             // verify required parameter 'ownerId' is not null or undefined
             if (ownerId === null || ownerId === undefined) {
-                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getFullQuiz.');
+                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getQuizPreview.');
             }
-            const localVarPath = `/api/v1/quizzes/get`;
+            const localVarPath = `/api/v1/quizzes/getPreview`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -133,22 +185,17 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Get Quiz Title
-         * @param {string} quizName 
+         * @summary Get Quiz Preview By User
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getQuizTitle: async (quizName: string, ownerId: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'quizName' is not null or undefined
-            if (quizName === null || quizName === undefined) {
-                throw new RequiredError('quizName','Required parameter quizName was null or undefined when calling getQuizTitle.');
-            }
+        getQuizPreviewByUser: async (ownerId: string, options: any = {}): Promise<RequestArgs> => {
             // verify required parameter 'ownerId' is not null or undefined
             if (ownerId === null || ownerId === undefined) {
-                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getQuizTitle.');
+                throw new RequiredError('ownerId','Required parameter ownerId was null or undefined when calling getQuizPreviewByUser.');
             }
-            const localVarPath = `/api/v1/quizzes/getTitle`;
+            const localVarPath = `/api/v1/quizzes/getPreviewsByUser`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -158,10 +205,6 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
             const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
-
-            if (quizName !== undefined) {
-                localVarQueryParameter['quiz_name'] = quizName;
-            }
 
             if (ownerId !== undefined) {
                 localVarQueryParameter['owner_id'] = ownerId;
@@ -252,13 +295,28 @@ export const QuizzesApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get Full Quiz
+         * @param {string} ownerId 
+         * @param {string} quizName 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getFullQuiz(ownerId: string, quizName: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getFullQuiz(ownerId, quizName, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * Raises: Http404InvalidRequestError, Http404QuizNotFound
+         * @summary Get Quiz Preview
          * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getFullQuiz(quizName: string, ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPublic>> {
-            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getFullQuiz(quizName, ownerId, options);
+        async getQuizPreview(quizName: string, ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizPreview>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getQuizPreview(quizName, ownerId, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -266,14 +324,13 @@ export const QuizzesApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get Quiz Title
-         * @param {string} quizName 
+         * @summary Get Quiz Preview By User
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getQuizTitle(quizName: string, ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelObject>> {
-            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getQuizTitle(quizName, ownerId, options);
+        async getQuizPreviewByUser(ownerId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<QuizPublic>>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getQuizPreviewByUser(ownerId, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -315,24 +372,34 @@ export const QuizzesApiFactory = function (configuration?: Configuration, basePa
         /**
          * 
          * @summary Get Full Quiz
+         * @param {string} ownerId 
+         * @param {string} quizName 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getFullQuiz(ownerId: string, quizName: string, options?: any): AxiosPromise<QuizPublic> {
+            return QuizzesApiFp(configuration).getFullQuiz(ownerId, quizName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Raises: Http404InvalidRequestError, Http404QuizNotFound
+         * @summary Get Quiz Preview
          * @param {string} quizName 
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getFullQuiz(quizName: string, ownerId: string, options?: any): AxiosPromise<QuizPublic> {
-            return QuizzesApiFp(configuration).getFullQuiz(quizName, ownerId, options).then((request) => request(axios, basePath));
+        getQuizPreview(quizName: string, ownerId: string, options?: any): AxiosPromise<QuizPreview> {
+            return QuizzesApiFp(configuration).getQuizPreview(quizName, ownerId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
-         * @summary Get Quiz Title
-         * @param {string} quizName 
+         * @summary Get Quiz Preview By User
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getQuizTitle(quizName: string, ownerId: string, options?: any): AxiosPromise<ModelObject> {
-            return QuizzesApiFp(configuration).getQuizTitle(quizName, ownerId, options).then((request) => request(axios, basePath));
+        getQuizPreviewByUser(ownerId: string, options?: any): AxiosPromise<Array<QuizPublic>> {
+            return QuizzesApiFp(configuration).getQuizPreviewByUser(ownerId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -368,26 +435,37 @@ export class QuizzesApi extends BaseAPI {
     /**
      * 
      * @summary Get Full Quiz
+     * @param {string} ownerId 
+     * @param {string} quizName 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof QuizzesApi
+     */
+    public getFullQuiz(ownerId: string, quizName: string, options?: any) {
+        return QuizzesApiFp(this.configuration).getFullQuiz(ownerId, quizName, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Raises: Http404InvalidRequestError, Http404QuizNotFound
+     * @summary Get Quiz Preview
      * @param {string} quizName 
      * @param {string} ownerId 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof QuizzesApi
      */
-    public getFullQuiz(quizName: string, ownerId: string, options?: any) {
-        return QuizzesApiFp(this.configuration).getFullQuiz(quizName, ownerId, options).then((request) => request(this.axios, this.basePath));
+    public getQuizPreview(quizName: string, ownerId: string, options?: any) {
+        return QuizzesApiFp(this.configuration).getQuizPreview(quizName, ownerId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 
-     * @summary Get Quiz Title
-     * @param {string} quizName 
+     * @summary Get Quiz Preview By User
      * @param {string} ownerId 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof QuizzesApi
      */
-    public getQuizTitle(quizName: string, ownerId: string, options?: any) {
-        return QuizzesApiFp(this.configuration).getQuizTitle(quizName, ownerId, options).then((request) => request(this.axios, this.basePath));
+    public getQuizPreviewByUser(ownerId: string, options?: any) {
+        return QuizzesApiFp(this.configuration).getQuizPreviewByUser(ownerId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 

@@ -8,6 +8,7 @@ from sqlalchemy.exc import InternalError, IntegrityError
 
 from app.core import settings, security
 from app import crud, schemas, main
+from app.exceptions import Http404UserNotFound
 from app.models import Base
 from app.database import engine, SessionLocal
 
@@ -27,13 +28,14 @@ def create_all(**kw):
         with db:
             owner = crud.user.create(db, obj_in=admin_obj)
             print("Admin created")
-    except InternalError:
+    except InternalError as err:
         with db:
-            owner_result = crud.user.get_by_name(db, name="Admin#0000")
-            if owner := owner_result.ok():
-                print("Admin already exists")
-            else:
-                raise owner_result.err()
+            owner = crud.user.get_by_name(db, name="Admin#0000")
+            if not owner:
+                raise err
+            print("Admin already exists")
+            return
+
     # Add the example quiz
     QUIZ_NAME = "Example Quiz"
     questions_and_answers = [

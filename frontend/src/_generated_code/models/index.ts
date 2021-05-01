@@ -5,6 +5,7 @@ export * from './httpvalidation-error';
 export * from './question-create';
 export * from './question-public';
 export * from './quiz-create';
+export * from './quiz-preview';
 export * from './quiz-public';
 export * from './quiz-update';
 export * from './room-create';

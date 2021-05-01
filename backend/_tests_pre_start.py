@@ -32,8 +32,6 @@ def wait_for_database_to_be_setup() -> None:
             name=settings.FIRST_SUPERUSER,
             number=0,
         )
-        if err := admin.err():
-            raise err
         return
     except Exception as e:
         logger.error(e)
