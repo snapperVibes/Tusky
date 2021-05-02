@@ -44,7 +44,7 @@ export default {
       const frozenQuizName = this.quizNameInput;
       const err = this._validate_input(frozenQuizName);
       if (err) {
-        displayError(err);
+        alert(err);
         return;
       }
       const authHeader = authHeaders(this.authToken);
