@@ -61,12 +61,11 @@ def get_quiz_preview_by_user(
 
 
 @router.get("/get", response_model=schemas.QuizPublic)
-def get_full_quiz(
-    *, db: Session = Depends(deps.get_db), owner_id: UUID, quiz_name: str
+def get_quiz(
+    *, db: Session = Depends(deps.get_db), id: UUID
 ):
-    # Todo: Figure out depends so we can have owner / name be a schema
     # Todo: Confirm quiz is public
-    return crud.quiz.get_full(db, quiz_name=quiz_name, owner_id=owner_id)
+    return crud.quiz.get(db, id=id)
 
 
 @router.put(

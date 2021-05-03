@@ -12,7 +12,7 @@
 
 <script>
 import { Vue, Options } from "vue-class-component";
-import Question from "@/components/room/quiz/question/Question";
+import Question from "@/components/Question";
 
 @Options({
   components: {

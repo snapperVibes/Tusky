@@ -27,9 +27,9 @@
 
 <script>
 import { ref } from "vue";
-import TeacherRoom from "@/components/room/TeacherRoom";
-import StudentRoom from "@/components/room/StudentRoom";
-import RegistrationAndLogin from "@/components/forms/RegistrationAndLogin";
+import TeacherRoom from "@/components/TeacherRoom";
+import StudentRoom from "@/components/StudentRoom";
+import RegistrationAndLogin from "@/components/RegistrationAndLogin";
 import { roomsApi, displayError, authHeaders, usersApi } from "@/api";
 import jwt_decode from "jwt-decode";
 // import Quiz from "@/components/room/quiz/Quiz";

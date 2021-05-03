@@ -23,7 +23,7 @@
 t
 <script>
 import { schema } from "@/api";
-import Room from "@/components/room/Room";
+import Room from "@/components/Room";
 
 export default {
   name: "RoomView",

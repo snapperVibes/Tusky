@@ -7,7 +7,6 @@
 # Exit on error
 set -e
 
-# Assuming you are running from .../tusky
 CODEGEN_DIR=${PWD}/frontend/src/_generated_code
 
 # Download the api

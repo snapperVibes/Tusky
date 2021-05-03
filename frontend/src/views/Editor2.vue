@@ -4,7 +4,7 @@
 </template>
 
 <script>
-import Room from "@/components/room/Room";
+import Room from "@/components/Room";
 import { Options, Vue } from "vue-class-component";
 
 @Options({

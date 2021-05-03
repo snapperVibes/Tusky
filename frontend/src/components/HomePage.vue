@@ -10,9 +10,9 @@
 <script>
 import { ref } from "vue";
 import NavBar from "@/components/NavBar";
-import RegistrationAndLogin from "@/components/forms/RegistrationAndLogin";
-import EnterRoom from "@/components/forms/EnterRoom";
-import CreateRoom from "@/components/forms/CreateRoom";
+import RegistrationAndLogin from "@/components/RegistrationAndLogin";
+import EnterRoom from "@/components/EnterRoom";
+import CreateRoom from "@/components/CreateRoom";
 import { roomsApi, usersApi, authHeaders } from "@/api";
 
 export default {

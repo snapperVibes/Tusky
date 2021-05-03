@@ -52,7 +52,9 @@ export default {
       loggedIn: false,
     };
   },
-
+  emits: {
+    authTokenUpdate: String,
+  },
   methods: {
     async loginEvent(clickEvent) {
       // On success emits a 'authTokenUpdate'
@@ -124,9 +126,6 @@ export default {
         return `Username and password fields must be filled out to log in to login / register.`;
       }
     },
-  },
-  emits: {
-    authTokenUpdate: String,
   },
   computed: {},
 };

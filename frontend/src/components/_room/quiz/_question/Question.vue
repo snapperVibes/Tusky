@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import MultipleChoice from "@/components/room/quiz/question/answer/MultipleChoice";
+import MultipleChoice from "@/components/MultipleChoice";
 import { Vue, Options } from "vue-class-component";
 
 @Options({

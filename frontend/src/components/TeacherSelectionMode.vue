@@ -1,11 +1,18 @@
 <template>
   <div class="selection-mode">
-    <CreateQuiz :auth-token="authToken"></CreateQuiz>
+    <CreateQuiz :auth-token="authToken" @createQuiz="onCreateQuiz" />
     <div class="my-own-quizzes-menu">
       <h2>My Quizzes</h2>
       <ul class="my-quizzes" v-if="quizzes">
         <li v-for="quiz in quizzes" :key="quiz.id">
-          <QuizPreview :name="quiz.name" :id="quiz.id" />
+          <QuizPreview
+            :name="quiz.name"
+            :quiz-id="quiz.id"
+            :auth-token="authToken"
+            @seeQuiz="onSeeQuiz"
+            @editQuiz="onEditQuiz"
+            @deleteQuiz="onDeleteQuiz"
+          />
         </li>
       </ul>
       <!--Todo: Add quiz creation button-->
@@ -15,8 +22,8 @@
 </template>
 
 <script>
-import QuizPreview from "@/components/room/quiz/QuizPreview";
-import CreateQuiz from "@/components/forms/CreateQuiz";
+import QuizPreview from "@/components/QuizPreview";
+import CreateQuiz from "@/components/CreateQuiz";
 import jwt_decode from "jwt-decode";
 import { quizzesApi } from "@/api";
 
@@ -33,6 +40,22 @@ export default {
     return {
       quizzes: quizzes,
     };
+  },
+  emits: ["createQuiz", "seeQuiz", "editQuiz"],
+
+  methods: {
+    onCreateQuiz: function (quizInfo) {
+      this.$emit("createQuiz", quizInfo);
+    },
+    onSeeQuiz: function (quizId) {
+      this.$emit("seeQuiz", quizId);
+    },
+    onEditQuiz: function (quizInfo) {
+      this.$emit("editQuiz", quizInfo);
+    },
+    onDeleteQuiz: function (quizId) {
+      alert("Not implemented yet");
+    },
   },
 };
 </script>

@@ -241,7 +241,7 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
     def _create_questions_and_answers(
         self, db: Session, *, obj_in: QuizCreate, db_quiz_obj: Quiz
     ):
-        if not db_quiz_obj.questions:
+        if not obj_in.questions:
             return
         for _question in obj_in.questions:
             db_question_obj = Question(quiz_id=db_quiz_obj.id, query=_question.query)
@@ -305,15 +305,15 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
             raise Http404QuizNotFound
         return quiz
 
-    def get_full(self, db: Session, *, quiz_name: str, owner_id: UUID) -> Quiz:
-        """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
-
-        quiz_ = self.get_previews(db, owner_id=owner_id, quiz_name=quiz_name)
-        questions = db.query(Question).filter(Question.quiz_id == quiz_.id).all()
-        for q in questions:
-            q.answers = db.query(Answer).filter(Answer.question_id == q.id).all()
-        quiz_.questions = questions
-        return quiz_
+    # def get_full(self, db: Session, *, quiz_name: str, owner_id: UUID) -> Quiz:
+    #     """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
+    #
+    #     quiz_ = self.get_previews(db, owner_id=owner_id, quiz_name=quiz_name)
+    #     questions = db.query(Question).filter(Question.quiz_id == quiz_.id).all()
+    #     for q in questions:
+    #         q.answers = db.query(Answer).filter(Answer.question_id == q.id).all()
+    #     quiz_.questions = questions
+    #     return quiz_
 
 
 quiz = CRUDQuiz(Quiz)

@@ -39,6 +39,8 @@ export default {
       quizNameInput: null,
     };
   },
+  emits: ["createQuiz"],
+
   methods: {
     createQuiz: async function (clickEvent) {
       const frozenQuizName = this.quizNameInput;
@@ -63,7 +65,7 @@ export default {
       if (!response) {
         return;
       }
-      this.$emit("quizCreated", response);
+      this.$emit("createQuiz", response.data);
     },
     _validate_input(quizName) {
       if (!quizName) {
@@ -71,7 +73,6 @@ export default {
       }
     },
   },
-  emits: ["quizCreated"],
 };
 </script>
 
