@@ -32,6 +32,7 @@ from app.schemas import (
     RoomCreate,
     RoomUpdate,
     QuestionCreate,
+    QuestionUpdate,
 )
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -89,11 +90,11 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db.refresh(db_obj)
         return db_obj
 
-    def remove(self, db: Session, *, id: UUID) -> ModelType:
+    def remove(self, db: Session, *, id: UUID) -> bool:
         obj = db.query(self.model).get(id)
         db.delete(obj)
         db.commit()
-        return obj
+        return True
 
 
 class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
@@ -243,11 +244,17 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
     ):
         if not obj_in.questions:
             return
+        previous_question_id = None
         for _question in obj_in.questions:
-            db_question_obj = Question(quiz_id=db_quiz_obj.id, query=_question.query)
+            db_question_obj = Question(
+                quiz_id=db_quiz_obj.id,
+                query=_question.query,
+                previous_question=previous_question_id,
+            )
             db.add(db_question_obj)
             db.flush()
             db.refresh(db_question_obj)
+            previous_question_id = db_question_obj.id
             self._create_answers(
                 db,
                 obj_in=_question,
@@ -275,6 +282,16 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
             db.flush()
             db.refresh(db_answer_obj)
             previous_answer_id = db_answer_obj.id
+
+    def update(
+        self,
+        db: Session,
+        *,
+        db_obj: Quiz,
+        obj_in: Union[QuizCreate, Dict[str, Any]],
+    ) -> Quiz:
+        super(CRUDQuiz, self).update(db, db_obj=db_obj, obj_in=obj_in)
+        return db_obj
 
     def get_previews(self, db: Session, *, owner_id: UUID, quiz_name: str) -> Quiz:
         """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""

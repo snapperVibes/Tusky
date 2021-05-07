@@ -15,7 +15,8 @@
     <Suspense v-if="mode === 'quiz-edit'">
       <template #default>
         <QuizEditor
-          :quiz-info="quizInfo"
+          v-model:quizInfo="quizInfo"
+          :auth-token="authToken"
           @toSelectionMode="onToSelectionMode"
         />
       </template>

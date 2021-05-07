@@ -31,6 +31,12 @@ export interface QuestionPublic {
     id?: any;
     /**
      * 
+     * @type {string}
+     * @memberof QuestionPublic
+     */
+    previousQuestion?: any;
+    /**
+     * 
      * @type {Array&lt;AnswerPublic&gt;}
      * @memberof QuestionPublic
      */

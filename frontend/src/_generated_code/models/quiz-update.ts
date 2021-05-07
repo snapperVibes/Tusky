@@ -29,4 +29,16 @@ export interface QuizUpdate {
      * @memberof QuizUpdate
      */
     id: any;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuizUpdate
+     */
+    ownerId: any;
+    /**
+     * 
+     * @type {Array&lt;QuestionCreate&gt;}
+     * @memberof QuizUpdate
+     */
+    questions?: any;
 }

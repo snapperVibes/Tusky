@@ -5,11 +5,31 @@
 #   At the time of writing, THE MIXIN IS NOT YET IMPLEMENTED
 import random
 import string
+from functools import partial
 from typing import Optional, List
 
 from pydantic import BaseModel, validator, Field
 from uuid import UUID
 
+
+def _sort_by_id(_list: List, on: str):
+    # Todo: This function isn't optimized.
+    copied_list = _list.copy()
+    sorted_list = []
+    # Modifying the original list seems sketchy, so we create a copy
+
+    def _sort(remaining_list: List, prev_id: Optional[int]):
+        for index, value in enumerate(remaining_list):
+            if getattr(value, on) == prev_id:
+                sorted_list.append(remaining_list[index])
+                return _sort(remaining_list, prev_id=value.id)
+
+    _sort(copied_list, prev_id=None)
+    return sorted_list
+
+
+_sort_questions = partial(_sort_by_id, on="previous_question")
+_sort_answers = partial(_sort_by_id, on="previous_answer")
 
 # # Template
 # #
@@ -148,17 +168,14 @@ class AnswerUpdate(_AnswerBase, LoginRequired):
 
 
 class _AnswerInDBBase(_AnswerBase):
-    id: Optional[UUID] = None
+    id: UUID
+    previous_answer: Optional[UUID]
 
     class Config:
         orm_mode = True
 
 
 class AnswerPublic(_AnswerInDBBase):
-    pass
-
-
-class AnswerInDB(_AnswerInDBBase):
     pass
 
 
@@ -169,24 +186,27 @@ class _QuestionBase(BaseModel):
 
 class QuestionCreate(_QuestionBase, LoginRequired):
     answers: List[AnswerCreate]
+    previous_question: Optional[UUID] = None
 
 
 class QuestionUpdate(_QuestionBase, LoginRequired):
-    pass
+    previous_question: Optional[UUID] = None
 
 
 class _QuestionInDBBase(_QuestionBase):
     id: Optional[UUID] = None
+    previous_question: Optional[UUID]
+    answers: List[AnswerPublic]
+
+    @validator("answers")
+    def sort_answers(cls, v):
+        return _sort_answers(v)
 
     class Config:
         orm_mode = True
 
 
 class QuestionPublic(_QuestionInDBBase):
-    answers: List[AnswerPublic]
-
-
-class QuestionInDB(_QuestionInDBBase):
     pass
 
 
@@ -202,25 +222,30 @@ class QuizPreview(BaseModel):
 
 
 class QuizCreate(_QuizBase, LoginRequired):
+    # Todo: Figure out how to sync Create/Update
     owner: UUID = Field(alias="owner_id")
     questions: Optional[List[QuestionCreate]]
 
 
 class QuizUpdate(_QuizBase, LoginRequired):
+    # Todo: Figure out how to sync Create/Update
     id: UUID
+    owner: UUID = Field(alias="owner_id")
+    questions: Optional[List[QuestionCreate]]
 
 
 class _QuizInDBBase(_QuizBase):
     id: Optional[UUID] = None
     owner: UUID = Field(alias="owner_id")
+    questions: List[QuestionPublic]
+
+    @validator("questions")
+    def sort_questions(cls, v):
+        return _sort_questions(v)
 
     class Config:
         orm_mode = True
 
 
 class QuizPublic(_QuizInDBBase):
-    questions: List[QuestionPublic]
-
-
-class QuizInDB(_QuizInDBBase):
     pass

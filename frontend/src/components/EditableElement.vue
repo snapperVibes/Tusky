@@ -36,8 +36,7 @@ export default {
       textOut: this.text,
     };
   },
-  emits: ["elementUpdate"],
-
+  emits: ["update:text"],
   methods: {
     enterEditMode: function () {
       this.editMode = true;
@@ -52,10 +51,13 @@ export default {
         return;
       }
       this.editMode = false;
+      // Todo: You could change the value half way through this function
       let input_ = this.$refs.inputElement;
+      if (!input_.value) {
+        return;
+      }
       if (input_.value !== this.textOut) {
-        console.log("Emitting an element updated event");
-        this.$emit("elementUpdate");
+        this.$emit("update:text", input_.value);
       }
       this.textOut = input_.value;
       this.$refs.inputElement.value = null;

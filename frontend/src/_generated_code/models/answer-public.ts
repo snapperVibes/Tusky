@@ -28,5 +28,11 @@ export interface AnswerPublic {
      * @type {string}
      * @memberof AnswerPublic
      */
-    id?: any;
+    id: any;
+    /**
+     * 
+     * @type {string}
+     * @memberof AnswerPublic
+     */
+    previousAnswer?: any;
 }

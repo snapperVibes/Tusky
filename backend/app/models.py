@@ -81,11 +81,21 @@ def RoomFK(**kw):
 
 
 def QuizFK(**kw):
-    return C(UUID(as_uuid=True), FK("quiz.id"), nullable=False, **kw)
+    return C(
+        UUID(as_uuid=True),
+        FK("quiz.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+        **kw,
+    )
 
 
 def QuestionFK(**kw):
-    return C(UUID(as_uuid=True), FK("question.id"), nullable=True, **kw)
+    return C(
+        UUID(as_uuid=True),
+        FK("question.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=True,
+        **kw,
+    )
 
 
 def AnswerFK(**kw):
@@ -166,7 +176,9 @@ class Quiz(Base):
     owner_id = UserFK()
     owner = relationship("User", back_populates="quizzes")
     is_public = C(BOOL, default=True)
-    questions = relationship("Question", back_populates="quiz")
+    questions = relationship(
+        "Question", back_populates="quiz", passive_deletes=True, passive_updates=True
+    )
 
 
 class Question(Base):
@@ -175,6 +187,7 @@ class Question(Base):
     quiz_id = QuizFK()
     quiz = relationship("Quiz", back_populates="questions")
     query = C(TEXT)
+    previous_question = QuestionFK()
     answers = relationship("Answer", back_populates="question")
 
 
@@ -198,7 +211,9 @@ class Answer(Base):
     id = ID()
     ts = TS()
     question_id = QuestionFK()
-    question = relationship("Question", back_populates="answers")
+    question = relationship(
+        "Question", back_populates="answers", passive_deletes=True, passive_updates=True
+    )
     previous_answer = AnswerFK()
     text = C(TEXT)
     # image = ImageFK()

@@ -29,4 +29,10 @@ export interface QuestionCreate {
      * @memberof QuestionCreate
      */
     answers: any;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuestionCreate
+     */
+    previousQuestion?: any;
 }

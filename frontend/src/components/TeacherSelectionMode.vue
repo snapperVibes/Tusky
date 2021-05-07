@@ -3,7 +3,7 @@
     <CreateQuiz :auth-token="authToken" @createQuiz="onCreateQuiz" />
     <div class="my-own-quizzes-menu">
       <h2>My Quizzes</h2>
-      <ul class="my-quizzes" v-if="quizzes">
+      <ul class="my-quizzes" v-if="quizzes.length !== 0">
         <li v-for="quiz in quizzes" :key="quiz.id">
           <QuizPreview
             :name="quiz.name"
@@ -25,7 +25,7 @@
 import QuizPreview from "@/components/QuizPreview";
 import CreateQuiz from "@/components/CreateQuiz";
 import jwt_decode from "jwt-decode";
-import { quizzesApi } from "@/api";
+import { authHeaders, displayError, quizzesApi } from "@/api";
 
 export default {
   name: "TeacherSelectionMode",
@@ -53,8 +53,22 @@ export default {
     onEditQuiz: function (quizInfo) {
       this.$emit("editQuiz", quizInfo);
     },
-    onDeleteQuiz: function (quizId) {
-      alert("Not implemented yet");
+    onDeleteQuiz: async function (quizId) {
+      const authHeader = authHeaders(this.authToken);
+      await quizzesApi.deleteQuiz(quizId, authHeader).catch((err) => {
+        displayError(err);
+        return false;
+      });
+      const indexToDelete = this.quizzes.some((q, index) => {
+        if (q.id !== quizId) {
+          return false;
+        }
+        return index;
+      });
+      this.quizzes.splice(indexToDelete, 1);
+      this.$forceUpdate();
+      alert("Deleted");
+      return true;
     },
   },
 };

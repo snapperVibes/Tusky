@@ -46,7 +46,7 @@ function atLeastOneOf(...values) {
       }
       if (masterValue != v) {
         alert("Tusky failed a santiy check.");
-        console.log(values);
+        console.log("Failed sanity check values:", values);
       }
     }
   });

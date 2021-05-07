@@ -34,5 +34,10 @@ def get_room_by_code(
 
 
 @router.put("/update", response_model=schemas.RoomPublic)
-def update_room(*, db: Session = Depends(deps.get_db), obj_in: schemas.RoomUpdate):
+def update_room(
+    *,
+    db: Session = Depends(deps.get_db),
+    obj_in: schemas.RoomUpdate,
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
     return crud.room.get(db, id=obj_in.id)

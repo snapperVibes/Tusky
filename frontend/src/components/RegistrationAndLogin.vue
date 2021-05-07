@@ -86,10 +86,6 @@ export default {
       this.loggedIn = true;
       [this.usernameInput, this.passwordInput] = [null, null];
       this.$forceUpdate();
-      // const authToken = await response.data.authToken;
-      // // Todo: the username SHOULD be fetched on the same call as the token
-      // console.log(response);
-      // this.$emit("authTokenUpdate", authToken);
     },
 
     async registerEvent(clickEvent) {
@@ -117,7 +113,6 @@ export default {
         return;
       }
       const user = response.data;
-      console.log(user);
       const fullUsername = concatUsername(user.identifier_name, user.number);
       await this._login(fullUsername, frozenPassword);
     },

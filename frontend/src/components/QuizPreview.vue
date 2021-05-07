@@ -43,11 +43,11 @@ export default {
       if (!response) {
         return;
       }
-      console.log(response);
       this.$emit("editQuiz", response.data);
     },
     deleteQuiz: function () {
       this.$emit("deleteQuiz", this.quizId);
+      // Todo: this view breaks if it's the last quiz
     },
   },
 };

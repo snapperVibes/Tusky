@@ -34,7 +34,10 @@ def create_quiz(
 
 @router.get("/getPreview", response_model=schemas.QuizPreview)
 def get_quiz_preview(
-    *, db: Session = Depends(deps.get_db), quiz_name: str, owner_id: UUID
+    *,
+    db: Session = Depends(deps.get_db),
+    quiz_name: str,
+    owner_id: UUID,
 ):
     """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
     return crud.quiz.get_previews(db, owner_id=owner_id, quiz_name=quiz_name)
@@ -61,9 +64,7 @@ def get_quiz_preview_by_user(
 
 
 @router.get("/get", response_model=schemas.QuizPublic)
-def get_quiz(
-    *, db: Session = Depends(deps.get_db), id: UUID
-):
+def get_quiz(*, db: Session = Depends(deps.get_db), id: UUID):
     # Todo: Confirm quiz is public
     return crud.quiz.get(db, id=id)
 
@@ -76,6 +77,7 @@ def update_quiz(
     *,
     db: Session = Depends(deps.get_db),
     obj_in: schemas.QuizUpdate,
+    current_user: models.User = Depends(deps.get_current_active_user),
 ):
     quiz = crud.quiz.get(db=db, id=obj_in.id)
     # Todo: Add measures to allow a quiz to safely switch owners
@@ -84,3 +86,18 @@ def update_quiz(
     if not quiz:
         raise Http404QuizNotFound
     return crud.quiz.update(db=db, db_obj=quiz, obj_in=obj_in)
+
+
+@router.delete("/{id}")
+def delete_quiz(
+    *,
+    db: Session=Depends(deps.get_db),
+    id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    quiz = crud.quiz.get(db, id=id)
+    if not quiz:
+        raise Http404QuizNotFound
+    if quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+    return {"removed": crud.quiz.remove(db, id=id)}

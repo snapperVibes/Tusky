@@ -2,6 +2,7 @@
   <div class="return-to-room">
     <nav>
       <button @click.prevent="toSelectionMode">To selection mode</button>
+      (Unsaved data will be discarded)
     </nav>
   </div>
 </template>
