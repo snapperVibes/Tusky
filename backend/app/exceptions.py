@@ -79,4 +79,8 @@ class Http404QuizNotFound(Http404InvalidRequestError):
 
 
 class IntegrityError(TuskyError):
-    pass
+    status_code = status.HTTP_403_FORBIDDEN
+
+
+class Http403QuizNameConflict(IntegrityError):
+    detail = "Two quizzes by the same owner cannot have the same name.",

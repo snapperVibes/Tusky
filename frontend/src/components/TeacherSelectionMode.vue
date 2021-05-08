@@ -55,10 +55,15 @@ export default {
     },
     onDeleteQuiz: async function (quizId) {
       const authHeader = authHeaders(this.authToken);
-      await quizzesApi.deleteQuiz(quizId, authHeader).catch((err) => {
-        displayError(err);
-        return false;
-      });
+      const response = await quizzesApi
+        .deleteQuiz(quizId, authHeader)
+        .catch((err) => {
+          displayError(err);
+          return false;
+        });
+      if (!response) {
+        return;
+      }
       const indexToDelete = this.quizzes.some((q, index) => {
         if (q.id !== quizId) {
           return false;

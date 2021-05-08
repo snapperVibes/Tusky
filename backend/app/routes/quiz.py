@@ -122,6 +122,21 @@ def update_question(
     return crud.question.update(db, db_obj=db_obj, obj_in=obj_in)
 
 
+@router.delete("/question/{id}")
+def delete_question(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    question = crud.question.get(db, id=id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found.")
+    if question.quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+    return {"removed": crud.question.remove(db, id=id)}
+
+
 @router.post("/answer/create", response_model=schemas.Answer)
 def create_answer(
     *,
@@ -154,3 +169,18 @@ def update_answer(
             detail="You can only modify answers belonging to your own quizzes.",
         )
     return crud.question.update(db, db_obj=db_obj, obj_in=obj_in)
+
+
+@router.delete("/answer/{id}")
+def delete_answer(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    answer = crud.answer.get(db, id=id)
+    if not answer:
+        raise HTTPException(status_code=404, detail="Answer not found.")
+    if answer.question.quiz.owner_id != current_user.id:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+    return {"removed": crud.answer.remove(db, id=id)}

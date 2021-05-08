@@ -36,7 +36,7 @@ from app.exceptions import (
     Http404ActiveRoomNotFound,
     Http404InvalidRequestError,
     Http404QuizNotFound,
-    IntegrityError,
+    IntegrityError, Http403QuizNameConflict,
 )
 from app.models import Base, User, Quiz, Question, Answer, Room
 from app.schemas import (
@@ -57,7 +57,7 @@ CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
-class ModelAndSchema(NamedTuple):
+class _ModelAndSchema(NamedTuple):
     model: Optional[ModelType]
     schema: Optional[Union[CreateSchemaType, UpdateSchemaType, Dict]]
 
@@ -115,27 +115,27 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db.refresh(db_obj)
         return db_obj
 
-    def remove(self, db: Session, *, id: UUID) -> bool:
+    def remove(self, db: Session, *, id: UUID) -> int:
         obj = db.query(self.model).get(id)
         db.delete(obj)
         db.commit()
-        return True
+        return 1
 
-    # Todo: Typing: I don't understand what a symbol is,
-    #  and Pycharm says it's the wrong type
-    def _match_by_id(
-        self, db_objs: symbol, objs_in: Optional[List[Union[UpdateSchemaType, Dict]]]
-    ) -> Dict[UUID, ModelAndSchema]:
-        # Helper function for updating nested models.
-        id_to_db_obj = {obj.id: obj for obj in db_objs}
-        id_to_obj_in = {obj.id: obj for obj in objs_in}
-        result = {}
-        for id in id_to_db_obj.keys() | id_to_obj_in.keys():
-            result[id] = ModelAndSchema(
-                model=id_to_db_obj.get(id, None),
-                schema=id_to_obj_in.get(id, None),
-            )
-        return result
+    # # Todo: Typing: I don't understand what a symbol is,
+    # #  and Pycharm says it's the wrong type
+    # def _match_by_id(
+    #     self, db_objs: symbol, objs_in: Optional[List[Union[UpdateSchemaType, Dict]]]
+    # ) -> Dict[UUID, _ModelAndSchema]:
+    #     # Helper function for updating nested models.
+    #     id_to_db_obj = {obj.id: obj for obj in db_objs}
+    #     id_to_obj_in = {obj.id: obj for obj in objs_in}
+    #     result = {}
+    #     for id in id_to_db_obj.keys() | id_to_obj_in.keys():
+    #         result[id] = _ModelAndSchema(
+    #             model=id_to_db_obj.get(id, None),
+    #             schema=id_to_obj_in.get(id, None),
+    #         )
+    #     return result
 
 
 class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
@@ -262,7 +262,64 @@ event.listen(
 
 
 class CRUDAnswer(_CRUDBase[Answer, AnswerCreate, AnswerUpdate]):
-    pass
+    def remove(self, db: Session, *, id: UUID) -> int:
+        db.execute(
+            text("SELECT delete_single_answer(:id)").bindparams(id=id),
+        )
+        db.commit()
+        return 1
+
+
+_delete_single_answer = DDL(
+    """\
+CREATE FUNCTION delete_single_answer(answer_id UUID) RETURNS INT AS $$
+    '''
+    Changes the previous answer of the next answer if the current answer is deleted.
+
+    Example Answer table:
+        id | previous_answer
+        ---|---
+        1  | null
+        2  | 1
+        3  | 2
+
+        If answer with id 2 is deleted,
+        this function changes answer 3 so the table looks like this:
+        id | previous_answer
+        ---|---
+        1  | null
+        3  | 1
+    '''
+    # Todo: Optimize
+    select_plan = plpy.prepare(
+        "SELECT previous_answer FROM answer WHERE id = $1", ["UUID"]
+    )
+    rows = plpy.execute(select_plan, [answer_id])
+    if len(rows) > 1:
+        raise plpy.Error(
+        "Tusky failed a sanity check: "
+        "multiple answers pointed towards the same previous_answer.",
+    )
+    previous_id = rows[0]["previous_answer"]
+    update_plan = plpy.prepare(
+        "UPDATE answer SET previous_answer = $1 WHERE previous_answer = $2;",
+        ["UUID", "UUID"]
+    )
+    plpy.execute(
+        update_plan,
+        [previous_id, answer_id]
+    )
+    delete_plan = plpy.prepare("DELETE FROM answer WHERE id = $1", ["UUID"])
+    plpy.execute(
+        delete_plan,
+        [answer_id]
+    )
+    return 1
+$$ LANGUAGE PLPYTHON3U;"""
+)
+event.listen(
+    Answer.__table__, "after_create", _delete_single_answer.execute_if(dialect="postgresql")
+)
 
 
 class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
@@ -274,10 +331,20 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
         try:
             quiz = super(CRUDQuiz, self).create(db, obj_in=obj_in)
         except sqlalchemy_IntegrityError as err:
-            raise IntegrityError(
-                status_code=400,
-                detail="Two quizzes by the same owner cannot have the same name.",
-            ) from err
+            raise Http403QuizNameConflict from err
+        return quiz
+
+    def update(
+        self,
+        db: Session,
+        *,
+        db_obj: Quiz,
+        obj_in: Union[QuizUpdate, Dict[str, Any]],
+    ) -> Quiz:
+        try:
+            quiz = super(CRUDQuiz, self).update(db, db_obj=db_obj, obj_in=obj_in)
+        except sqlalchemy_IntegrityError as err:
+            raise Http403QuizNameConflict from  err
         return quiz
 
     def get_previews_by_user(
