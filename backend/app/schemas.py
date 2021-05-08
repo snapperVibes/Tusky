@@ -1,8 +1,3 @@
-# SECURITY NOTE:
-#   Schemas _XyzBase and XyzUpdate CAN NOT have properties that would break things
-#   if the updated property is not the same as the original property
-#   without the schema also inheriting the LoginRequired mixin.
-#   At the time of writing, THE MIXIN IS NOT YET IMPLEMENTED
 import random
 import string
 from functools import partial
@@ -31,37 +26,10 @@ def _sort_by_id(_list: List, on: str):
 _sort_questions = partial(_sort_by_id, on="previous_question")
 _sort_answers = partial(_sort_by_id, on="previous_answer")
 
-# # Template
-# #
-# class _XyzBase(BaseModel):
-#     """ Shared properties """
-#
-#
-# class XyzCreate(_XyzBase):
-#     """ Properties to receive via API on creation """
-#
-#
-# class XyzUpdate(_XyzBase):
-#     """ Properties to receive via API on update"""
-#     # Should these have close methods that alias to set_active = False?
-#
-#
-# class _XyzInDBBase(_XyzBase):
-#     class Config:
-#         orm_mode = True
-#
-#
-# class XyzPublic(_XyzBase):
-#     """ Additional properties to return via API """
-#
-#
-# class XyzInDB(_XyzInDBBase):
-#     """ Additional properties stored in the database """
-#
-#
-########################################################################################
-# Todo: Write logic 😛
-class LoginRequired:
+
+class _LoginRequired:
+    # Todo: Actually make this mixin function.
+    #  At the moment, it just serves
     pass
 
 
@@ -77,28 +45,29 @@ class TokenPayload(BaseModel):
 
 
 ########################################################################################
-class _UserBase(BaseModel):
-    display_name: Optional[str] = None
-    is_active: Optional[bool] = True
-    # Todo: Secure is_superuser
+class UserCreate(BaseModel):
+    display_name: str
+    password: str
+    is_active: bool = True
     is_superuser: bool = False
 
 
-class UserCreate(_UserBase):
+class UserUpdate(BaseModel):
+    id: UUID
+    display_name: Optional[str]
+    password: Optional[str]
+    is_active: Optional[bool]
+    is_superuser: Optional[bool]
+    number: Optional[int]  # Todo: Type: UserNumber
+
+
+class _UserInDB(BaseModel):
+    id: UUID
     display_name: str
-    password: str
-
-
-class UserUpdate(_UserBase, LoginRequired):
-    number: int  # Todo: Type: UserNumber
-    password: Optional[int] = None
-    number: int = None
-
-
-class _UserInDBBase(_UserBase):
-    id: Optional[UUID] = None
-    identifier_name: str
+    is_active: bool
+    is_superuser: bool
     number: int
+    identifier_name: str
 
     @validator("number")
     def display_number(cls, v):
@@ -109,96 +78,99 @@ class _UserInDBBase(_UserBase):
         orm_mode = True
 
 
-class UserPublic(_UserInDBBase):
+class User(_UserInDB):
     pass
 
 
-class UserInDB(_UserInDBBase):
+class UserInDB(_UserInDB):
     hashed_password: str
 
 
 ########################################################################################
-class _RoomBase(BaseModel):
-    is_active: Optional[bool] = True
-    # Todo: Add url property (Pydantic HttpUrl)
-
-
-class RoomCreate(_RoomBase, LoginRequired):
+class RoomCreate(BaseModel):
     owner_id: UUID
     code: str = Field(
         default_factory=lambda: "".join(
             random.choice(string.ascii_uppercase) for _ in range(5)
         )
     )
+    is_active: bool = True
 
 
-class RoomUpdate(_RoomBase, LoginRequired):
-    # Room events. Do these belong in a different area?
+# Do room events go here?
+class RoomUpdate(BaseModel):
     id: UUID
+    code: Optional[str]
+    is_active: Optional[bool]
 
 
-class _RoomInDBBase(_RoomBase):
+class _RoomInDB(BaseModel):
     id: UUID
     owner_id: UUID
     code: str
+    is_active: bool
 
     class Config:
         orm_mode = True
 
 
-class RoomPublic(_RoomInDBBase):
-    pass
-
-
-class RoomInDB(_RoomInDBBase):
+class Room(_RoomInDB):
     pass
 
 
 ########################################################################################
 class _AnswerBase(BaseModel):
-    text: str
-
-
-class AnswerCreate(_AnswerBase, LoginRequired):
-    pass
-
-
-class AnswerUpdate(_AnswerBase, LoginRequired):
-    pass
-
-
-class _AnswerInDBBase(_AnswerBase):
-    id: UUID
     previous_answer: Optional[UUID]
+
+
+class AnswerCreate(_AnswerBase):
+    text: str
+    question_id: UUID
+
+
+class AnswerUpdate(_AnswerBase):
+    id: UUID
+    text: Optional[str]
+
+
+class _AnswerInDB(_AnswerBase):
+    id: UUID
+    text: str
+    question_id: UUID
 
     class Config:
         orm_mode = True
 
 
-class AnswerPublic(_AnswerInDBBase):
+class AnswerForStudent(_AnswerInDB):
+    pass
+
+
+class Answer(_AnswerInDB):
     pass
 
 
 ########################################################################################
 class _QuestionBase(BaseModel):
-    query: str
-
-
-class QuestionCreate(_QuestionBase, LoginRequired):
-    answers: List[AnswerCreate]
-    previous_question: Optional[UUID] = None
-
-
-class QuestionUpdate(_QuestionBase, LoginRequired):
-    previous_question: Optional[UUID] = None
-
-
-class _QuestionInDBBase(_QuestionBase):
-    id: Optional[UUID] = None
     previous_question: Optional[UUID]
-    answers: List[AnswerPublic]
 
-    @validator("answers")
+
+class QuestionCreate(_QuestionBase):
+    query: str
+    quiz_id: UUID
+
+
+class QuestionUpdate(_QuestionBase):
+    id: UUID
+    query: Optional[str]
+
+
+class _QuestionInDB(_QuestionBase):
+    id: UUID = None
+    query: str
+    quiz_id: UUID
+
+    @validator("answers", check_fields=False)
     def sort_answers(cls, v):
         return _sort_answers(v)
 
@@ -206,40 +178,32 @@ class _QuestionInDBBase(_QuestionBase):
         orm_mode = True
 
 
-class QuestionPublic(_QuestionInDBBase):
-    pass
+class QuestionForStudent(_QuestionInDB):
+    answers: List[AnswerForStudent]
+
+
+class Question(_QuestionInDB):
+    answers: List[Answer]
 
 
 ########################################################################################
-class _QuizBase(BaseModel):
-    # Todo: Verify length of 1
-    name: str
+class QuizCreate(BaseModel):
+    title: str
+    owner_id: UUID
 
 
-class QuizPreview(BaseModel):
+class QuizUpdate(BaseModel):
     id: UUID
-    owner: UUID
+    title: Optional[str]
+    owner_id: Optional[UUID]
 
 
-class QuizCreate(_QuizBase, LoginRequired):
-    # Todo: Figure out how to sync Create/Update
-    owner: UUID = Field(alias="owner_id")
-    questions: Optional[List[QuestionCreate]]
-
-
-class QuizUpdate(_QuizBase, LoginRequired):
-    # Todo: Figure out how to sync Create/Update
+class _QuizInDB(BaseModel):
     id: UUID
-    owner: UUID = Field(alias="owner_id")
-    questions: Optional[List[QuestionCreate]]
+    title: str
+    owner_id: UUID
 
-
-class _QuizInDBBase(_QuizBase):
-    id: Optional[UUID] = None
-    owner: UUID = Field(alias="owner_id")
-    questions: List[QuestionPublic]
-
-    @validator("questions")
+    @validator("questions", check_fields=False)
     def sort_questions(cls, v):
         return _sort_questions(v)
 
@@ -247,5 +211,13 @@ class _QuizInDBBase(_QuizBase):
         orm_mode = True
 
 
-class QuizPublic(_QuizInDBBase):
+class QuizPreview(_QuizInDB):
     pass
+
+
+class QuizForStudent(_QuizInDB):
+    questions: List[QuestionForStudent]
+
+
+class Quiz(_QuizInDB):
+    questions: List[Question]

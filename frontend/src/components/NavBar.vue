@@ -8,9 +8,15 @@
             Welcome, {{ username }}#{{ number }}
           </div>
         </li>
+        <li>
+          <div class="elephant-logo">
+            <img class="img__elephant" alt="🐘" src="../assets/elephant.jpg" />
+          </div>
+        </li>
       </ul>
     </div>
   </nav>
+  <br />
   <br />
   <br />
 </template>
@@ -43,5 +49,12 @@ li {
 #nav-wrapper div.welcome {
   /*text-align: right;*/
   float: right;
+}
+.img__elephant {
+  margin-top: -3px;
+  margin-left: -10px;
+  float: right;
+  width: 25px;
+  height: auto;
 }
 </style>

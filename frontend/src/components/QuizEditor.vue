@@ -3,7 +3,6 @@
     <h2>Quiz Editor</h2>
     <div class="action-buttons">
       <ToSelectionMode @toSelectionMode="onToSelectionMode" />
-      <SaveWork @saveWork="onSaveWork" />
     </div>
     <div class="editable-quiz">
       <!--QUIZ TITLE-->
@@ -11,7 +10,8 @@
         <h2>
           <EditableElement
             class="editable-title"
-            v-model:text="editableInfo.name"
+            v-model:text="editableInfo.title"
+            @edited="onEditedTitle(this.editableInfo)"
           />
         </h2>
       </div>
@@ -23,6 +23,7 @@
           <EditableElement
             class="editable-question"
             v-model:text="question.query"
+            @edited="onEditedQuestion(question)"
           />
           <!--QUESTION ANSWERS-->
           <ol class="ol__answers">
@@ -30,6 +31,7 @@
               <EditableElement
                 class="editable-answer"
                 v-model:text="answer.text"
+                @edited="onEditedAnswer(answer)"
               />
             </li>
           </ol>
@@ -43,13 +45,11 @@
 <script>
 import ToSelectionMode from "@/components/ToSelectionMode";
 import EditableElement from "@/components/EditableElement";
-import SaveWork from "@/components/SaveWork";
 import { authHeaders, quizzesApi } from "@/api";
 
 export default {
   name: "QuizEditor",
   components: {
-    SaveWork,
     ToSelectionMode,
     EditableElement,
   },
@@ -64,17 +64,40 @@ export default {
       exitWithoutSaving: false,
     };
   },
+  // Todo: The methods could save a lot of repeated code if they were written in a functional manner
   methods: {
     onToSelectionMode: function () {
       this.$emit("toSelectionMode");
     },
-    onSaveWork: async function () {
+    onEditedTitle: async function (quiz) {
       const authHeader = authHeaders(this.authToken);
       this.editableInfo = (
-        await quizzesApi.updateQuiz(this.editableInfo, authHeader)
+        await quizzesApi.updateQuiz(
+          { id: quiz.id, title: quiz.title },
+          authHeader
+        )
       ).data;
-      console.log("After save", this.editableInfo);
-      alert("Quiz saved");
+      console.log("Title updated!");
+    },
+    onEditedQuestion: async function (question) {
+      const authHeader = authHeaders(this.authToken);
+      question = (
+        await quizzesApi.updateQuestion(
+          { id: question.id, query: question.query },
+          authHeader
+        )
+      ).data;
+      console.log("Question updated");
+    },
+    onEditedAnswer: async function (answer) {
+      const authHeader = authHeaders(this.authToken);
+      answer = (
+        await quizzesApi.updateAnswer(
+          { id: answer.id, text: answer.text },
+          authHeader
+        )
+      ).data;
+      console.log("Answer updated");
     },
   },
   emits: ["toSelectionMode"],

@@ -1,6 +1,6 @@
 <template>
   <div class="quiz-preview">
-    <h4>{{ name }}</h4>
+    <h4>{{ title }}</h4>
     <span class="quiz-preview--options">
       <button class="quiz-preview__button see-results" @click.prevent="seeQuiz">
         See Results
@@ -25,7 +25,7 @@ import { authHeaders, displayError, quizzesApi } from "@/api";
 
 export default {
   name: "QuizPreview",
-  props: ["name", "quizId", "authToken"],
+  props: ["title", "quizId", "authToken"],
   emits: ["seeQuiz", "editQuiz", "deleteQuiz"],
 
   methods: {

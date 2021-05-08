@@ -1,6 +1,6 @@
 # Tusky
 ###### Real-time web quiz application
-(Work in progress)
+(Work in progress; Tusky certainly isn't ready to scale to millions)
 
 ## Specification
 ### Functional

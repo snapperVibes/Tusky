@@ -6,7 +6,7 @@
       <ul class="my-quizzes" v-if="quizzes.length !== 0">
         <li v-for="quiz in quizzes" :key="quiz.id">
           <QuizPreview
-            :name="quiz.name"
+            :title="quiz.title"
             :quiz-id="quiz.id"
             :auth-token="authToken"
             @seeQuiz="onSeeQuiz"

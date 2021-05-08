@@ -43,5 +43,5 @@ docker run \
 #  something I wrote that doesn't follow the OpenApi spec.
 echo "Adding 'export class ModelObject{} to $CODEGEN_DIR/models/index.ts'"
 echo "export class ModelObject{}" >> $CODEGEN_DIR/models/index.ts
-echo "Changing BASE_PATH to http://localhost:8000"
+echo "Changing BASE_PATH to http://localhost:8000 in $CODEGEN_DIR/base.ts"
 sed -i '/export const BASE_PATH/cexport const BASE_PATH = "http://localhost:8000";' $CODEGEN_DIR/base.ts

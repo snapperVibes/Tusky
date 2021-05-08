@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 from app import schemas, models, crud
 from . import _depends as deps
-from ._depends import login_required
 
 router = APIRouter(
     prefix="/rooms",
@@ -11,8 +10,7 @@ router = APIRouter(
 )
 
 
-@login_required
-@router.post("/create", response_model=schemas.RoomPublic)
+@router.post("/create", response_model=schemas.Room)
 def create_room(
     *,
     db: Session = Depends(deps.get_db),
@@ -23,7 +21,7 @@ def create_room(
     return crud.room.create(db, obj_in=obj_in)
 
 
-@router.get("/get-by-code", response_model=schemas.RoomPublic)
+@router.get("/get-by-code", response_model=schemas.Room)
 def get_room_by_code(
     *,
     db: Session = Depends(deps.get_db),
@@ -33,7 +31,7 @@ def get_room_by_code(
     return crud.room.get_by_code(db, code=code)
 
 
-@router.put("/update", response_model=schemas.RoomPublic)
+@router.put("/update", response_model=schemas.Room)
 def update_room(
     *,
     db: Session = Depends(deps.get_db),

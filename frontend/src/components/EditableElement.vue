@@ -36,7 +36,7 @@ export default {
       textOut: this.text,
     };
   },
-  emits: ["update:text"],
+  emits: ["update:text", "edited"],
   methods: {
     enterEditMode: function () {
       this.editMode = true;
@@ -58,6 +58,7 @@ export default {
       }
       if (input_.value !== this.textOut) {
         this.$emit("update:text", input_.value);
+        this.$emit("edited");
       }
       this.textOut = input_.value;
       this.$refs.inputElement.value = null;

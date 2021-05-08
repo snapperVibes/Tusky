@@ -7,15 +7,15 @@ from app.core import settings
 
 
 log_file_name = "db.log"
-handler_log_level = logging.INFO
-logger_log_level = logging.DEBUG
+handler_level = logging.INFO
+logger_level = logging.INFO
 
 handler = logging.FileHandler(log_file_name)
-handler.setLevel(handler_log_level)
+handler.setLevel(handler_level)
 
 logger = logging.getLogger("sqlalchemy")
 logger.addHandler(handler)
-logger.setLevel(logger_log_level)
+logger.setLevel(logger_level)
 
 engine = create_engine(
     settings.SQLALCHEMY_DATABASE_URI,

@@ -1,6 +1,20 @@
 __all__ = ["user", "quiz", "room"]
 
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+# Todo: These methods fetch unnecessary information by default
+#  If efficiency becomes an issue,
+#  API Endpoints should get their own custom CRUD methods
+
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    NamedTuple,
+)
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -13,6 +27,7 @@ from sqlalchemy.exc import (
     IntegrityError as sqlalchemy_IntegrityError,
 )
 from sqlalchemy.orm import Session
+from sqlalchemy.util import symbol
 
 from app.core import security
 from app.exceptions import (
@@ -33,11 +48,18 @@ from app.schemas import (
     RoomUpdate,
     QuestionCreate,
     QuestionUpdate,
+    AnswerCreate,
+    AnswerUpdate,
 )
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
+
+
+class ModelAndSchema(NamedTuple):
+    model: Optional[ModelType]
+    schema: Optional[Union[CreateSchemaType, UpdateSchemaType, Dict]]
 
 
 # Todo: Wrap defaults in Results
@@ -77,12 +99,15 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         obj_in: Union[UpdateSchemaType, Dict[str, Any]],
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
+        print("obj_data type", type(obj_data))
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
         for field in obj_data:
+
             if field in update_data:
+                print(update_data[field])
                 setattr(db_obj, field, update_data[field])
 
         db.add(db_obj)
@@ -95,6 +120,22 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db.delete(obj)
         db.commit()
         return True
+
+    # Todo: Typing: I don't understand what a symbol is,
+    #  and Pycharm says it's the wrong type
+    def _match_by_id(
+        self, db_objs: symbol, objs_in: Optional[List[Union[UpdateSchemaType, Dict]]]
+    ) -> Dict[UUID, ModelAndSchema]:
+        # Helper function for updating nested models.
+        id_to_db_obj = {obj.id: obj for obj in db_objs}
+        id_to_obj_in = {obj.id: obj for obj in objs_in}
+        result = {}
+        for id in id_to_db_obj.keys() | id_to_obj_in.keys():
+            result[id] = ModelAndSchema(
+                model=id_to_db_obj.get(id, None),
+                schema=id_to_obj_in.get(id, None),
+            )
+        return result
 
 
 class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
@@ -125,6 +166,8 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
             """
         )
         identifier_name = security.to_identifier(obj_in.display_name)
+        if obj_in.is_superuser and not (identifier_name == "admin"):
+            raise PermissionError("Only admins can create super users")
         hashed_password = security.hash_password(obj_in.password)
         cursor: CursorResult = db.execute(
             statement,
@@ -148,7 +191,7 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         _name, _, _number = name.partition("#")
         if _number:
             if number:
-                raise ("A number and hash symbol were both passed")
+                raise ValueError("A number and hash symbol were both passed")
             number = _number
 
         if not (_name and number):
@@ -181,8 +224,6 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
     def is_superuser(self, user: User) -> bool:
         return user.is_superuser
 
-
-user = CRUDUser(User)
 
 # Database functions don't seem Pythonic.
 # I wish I could talk to industry people and learn best practices
@@ -220,91 +261,23 @@ event.listen(
 )
 
 
+class CRUDAnswer(_CRUDBase[Answer, AnswerCreate, AnswerUpdate]):
+    pass
+
+
+class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
+    pass
+
+
 class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
     def create(self, db: Session, *, obj_in: QuizCreate) -> Quiz:
-        # Todo: Learn SQLAlchemy relations; it handles getting foreign keys for us
-        db_quiz_obj = Quiz(name=obj_in.name, owner_id=obj_in.owner)
-        db.add(db_quiz_obj)
         try:
-            db.flush()
+            quiz = super(CRUDQuiz, self).create(db, obj_in=obj_in)
         except sqlalchemy_IntegrityError as err:
             raise IntegrityError(
                 status_code=400,
                 detail="Two quizzes by the same owner cannot have the same name.",
             ) from err
-        db.refresh(db_quiz_obj)
-        # Add questions and answers
-        self._create_questions_and_answers(db, obj_in=obj_in, db_quiz_obj=db_quiz_obj)
-        db.commit()
-        db.refresh(db_quiz_obj)
-        return db_quiz_obj
-
-    def _create_questions_and_answers(
-        self, db: Session, *, obj_in: QuizCreate, db_quiz_obj: Quiz
-    ):
-        if not obj_in.questions:
-            return
-        previous_question_id = None
-        for _question in obj_in.questions:
-            db_question_obj = Question(
-                quiz_id=db_quiz_obj.id,
-                query=_question.query,
-                previous_question=previous_question_id,
-            )
-            db.add(db_question_obj)
-            db.flush()
-            db.refresh(db_question_obj)
-            previous_question_id = db_question_obj.id
-            self._create_answers(
-                db,
-                obj_in=_question,
-                db_question_obj=db_question_obj,
-                previous_answer_id=None,
-            )
-
-    def _create_answers(
-        self,
-        db,
-        *,
-        obj_in: QuestionCreate,
-        db_question_obj: Question,
-        previous_answer_id: Optional[UUID],
-    ):
-        if not obj_in.answers:
-            return
-        for _answer in obj_in.answers:
-            db_answer_obj = Answer(
-                question_id=db_question_obj.id,
-                text=_answer.text,
-                previous_answer=previous_answer_id,
-            )
-            db.add(db_answer_obj)
-            db.flush()
-            db.refresh(db_answer_obj)
-            previous_answer_id = db_answer_obj.id
-
-    def update(
-        self,
-        db: Session,
-        *,
-        db_obj: Quiz,
-        obj_in: Union[QuizCreate, Dict[str, Any]],
-    ) -> Quiz:
-        super(CRUDQuiz, self).update(db, db_obj=db_obj, obj_in=obj_in)
-        return db_obj
-
-    def get_previews(self, db: Session, *, owner_id: UUID, quiz_name: str) -> Quiz:
-        """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
-        try:
-            quiz = (
-                db.query(self.model)
-                .filter(User.id == owner_id, Quiz.name == quiz_name)
-                .one_or_none()
-            )
-        except (sqlalchemy_MultipleResultsFound) as err:
-            raise Http404InvalidRequestError from err
-        if quiz is None:
-            raise Http404QuizNotFound
         return quiz
 
     def get_previews_by_user(
@@ -314,6 +287,7 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
         owner_id: UUID,
     ) -> Quiz:
         # Todo: Pagination
+        # Todo: Don't fetch unnecessary information
         try:
             quiz = db.query(self.model).filter(User.id == owner_id).all()
         except (sqlalchemy_MultipleResultsFound) as err:
@@ -321,19 +295,6 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
         if quiz is None:
             raise Http404QuizNotFound
         return quiz
-
-    # def get_full(self, db: Session, *, quiz_name: str, owner_id: UUID) -> Quiz:
-    #     """ Raises: Http404InvalidRequestError, Http404QuizNotFound"""
-    #
-    #     quiz_ = self.get_previews(db, owner_id=owner_id, quiz_name=quiz_name)
-    #     questions = db.query(Question).filter(Question.quiz_id == quiz_.id).all()
-    #     for q in questions:
-    #         q.answers = db.query(Answer).filter(Answer.question_id == q.id).all()
-    #     quiz_.questions = questions
-    #     return quiz_
-
-
-quiz = CRUDQuiz(Quiz)
 
 
 class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
@@ -349,8 +310,12 @@ class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
         ) as err:
             # I am excited for pattern matching in Python 3.10!
             if type(err) == sqlalchemy_NoResultFound:
-                raise Http404ActiveRoomNotFound(from_=err)
-            raise Http404InvalidRequestError(from_=err)
+                raise Http404ActiveRoomNotFound from err
+            raise Http404InvalidRequestError from err
 
 
+user = CRUDUser(User)
+answer = CRUDAnswer(Answer)
+question = CRUDQuestion(Question)
+quiz = CRUDQuiz(Quiz)
 room = CRUDRoom(Room)

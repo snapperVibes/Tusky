@@ -1,7 +1,6 @@
 <!--TODO: Refactor forms into components-->
 <template>
   <NavBar :username="username" :number="number" />
-  <!--  <h1>Tusky</h1>-->
   <RegistrationAndLogin @authTokenUpdate="onAuthTokenUpdate" />
   <EnterRoom :auth-token="authToken" />
   <CreateRoom :owner-id="userId" :auth-token="authToken" />

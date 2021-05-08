@@ -11,7 +11,6 @@ docker-compose down -v --remove-orphans
 
 if [ $(uname -s) = "Linux" ]; then
     echo Remove __pycache__ files
-    echo Check the source code before giving sudo powers to random scripts :P
     sudo find . -type d -name __pycache__ -exec rm -r {} \+
 fi
 

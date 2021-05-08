@@ -53,7 +53,7 @@ export default {
       const response = await quizzesApi
         .createQuiz(
           {
-            name: frozenQuizName,
+            title: frozenQuizName,
             owner_id: this.owner_id,
           },
           authHeader

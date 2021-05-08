@@ -39,6 +39,7 @@ class Base:
 # CheckConstraint validates at the database level
 # Validate validates at the Model level
 # In general, use the pydantic.validator decorator to do python-level validation
+
 ########################################################################################
 # Constraints
 def min_size(column: str, minimum) -> str:
@@ -51,13 +52,17 @@ def does_not_contain(column: str, regex: str):
 
 #######################################################################################
 # Functions for common columns
-# Todo: Sadly, it looks like I implemented my primary keys wrong
+# Todo: Sadly, it looks like I implemented my primary keys in a way that doesn't scale
+#   (As this is a pet-project/resume-builder, it is fun to over-engineer Tusky)
 #   I want to use a SnowFlake implementation, but I have some concerns with the protocol
 #   Namely, a SnowFlake's epoch is only 69 years long, and Twitter has deprecated them
 #   https://github.com/twitter-archive/snowflake/tree/snowflake-2010
 #   It seems that public facing snowflakes are okay as primary keys
 # Todo: The defaults for nullable on Answer (and maybe later Question)
 #   does not match the others
+# Todo: ondelete should be a per-column option
+
+
 def ID(**kw):
     # return C(INT, IDENTITY(), primary_key=True, **kw)
     return C(
@@ -83,7 +88,7 @@ def RoomFK(**kw):
 def QuizFK(**kw):
     return C(
         UUID(as_uuid=True),
-        FK("quiz.id", ondelete="CASCADE", onupdate="CASCADE"),
+        FK("quiz.id", ondelete="CASCADE"),
         nullable=False,
         **kw,
     )
@@ -92,7 +97,7 @@ def QuizFK(**kw):
 def QuestionFK(**kw):
     return C(
         UUID(as_uuid=True),
-        FK("question.id", ondelete="CASCADE", onupdate="CASCADE"),
+        FK("question.id", ondelete="CASCADE"),
         nullable=True,
         **kw,
     )
@@ -164,11 +169,11 @@ class UserRoomRoleLink(Base):
 
 
 class Quiz(Base):
-    __table_args__ = (UniqueConstraint("name", "owner_id"),)
+    __table_args__ = (UniqueConstraint("title", "owner_id"),)
     id = ID()
     ts = TS()
     # Todo: Consider changing to title before it's too late not to
-    name = C(
+    title = C(
         VARCHAR(32),
         CheckConstraint(min_size("name", 1)),
         nullable=False,
@@ -176,9 +181,7 @@ class Quiz(Base):
     owner_id = UserFK()
     owner = relationship("User", back_populates="quizzes")
     is_public = C(BOOL, default=True)
-    questions = relationship(
-        "Question", back_populates="quiz", passive_deletes=True, passive_updates=True
-    )
+    questions = relationship("Question", back_populates="quiz", passive_deletes=True)
 
 
 class Question(Base):
@@ -211,9 +214,7 @@ class Answer(Base):
     id = ID()
     ts = TS()
     question_id = QuestionFK()
-    question = relationship(
-        "Question", back_populates="answers", passive_deletes=True, passive_updates=True
-    )
+    question = relationship("Question", back_populates="answers", passive_deletes=True)
     previous_answer = AnswerFK()
     text = C(TEXT)
     # image = ImageFK()

@@ -4,6 +4,8 @@ __all__ = [
     "drop_all",
 ]
 
+from typing import NamedTuple, List
+
 from sqlalchemy.exc import InternalError, IntegrityError
 
 from app.core import settings, security
@@ -19,25 +21,24 @@ def create_all(**kw):
     db = SessionLocal()
 
     # Add the super user
-    admin_obj = schemas.UserCreate(
+    admin_in = schemas.UserCreate(
         display_name=settings.FIRST_SUPERUSER,
         password=settings.FIRST_SUPERUSER_PASSWORD,
         is_superuser=True,
     )
     try:
         with db:
-            owner = crud.user.create(db, obj_in=admin_obj)
+            admin = crud.user.create(db, obj_in=admin_in)
             print("Admin created")
     except InternalError as err:
         with db:
-            owner = crud.user.get_by_name(db, name="Admin#0000")
-            if not owner:
+            admin = crud.user.get_by_name(db, name="Admin#0000")
+            if not admin:
                 raise err
             print("Admin already exists")
             return
 
-    # Add the example quiz
-    QUIZ_NAME = "Example Quiz"
+    quiz_in = schemas.QuizCreate(title="Example Quiz", owner_id=admin.id)
     questions_and_answers = [
         (
             "What is your name?",
@@ -46,22 +47,25 @@ def create_all(**kw):
         ("What is your quest?", ["To seek the Holy Grail"]),
         ("What is your favorite color?", ["Blue", "Yellow"]),
     ]
-    questions_inits = []
-    for question, answers in questions_and_answers:
-        questions_inits.append(
-            schemas.QuestionCreate(
-                query=question, answers=[schemas.AnswerCreate(text=a) for a in answers]
+    with db:
+        quiz = crud.quiz.create(db, obj_in=quiz_in)
+        previous_question_id = None
+        for q, a in questions_and_answers:
+            question_in = schemas.QuestionCreate(
+                query=q, quiz_id=quiz.id, previous_question=previous_question_id
             )
-        )
-    quiz = schemas.QuizCreate(
-        name=QUIZ_NAME, owner_id=owner.id, questions=questions_inits
-    )
-    try:
-        with db:
-            crud.quiz.create(db, obj_in=quiz)
-            print("Example quiz created")
-    except IntegrityError:
-        print("Example quiz already exists")
+            question = crud.question.create(db, obj_in=question_in)
+            previous_question_id = question.id
+            previous_answer_id = None
+            for a_ in a:
+                answer_in = schemas.AnswerCreate(
+                    text=a_,
+                    question_id=previous_question_id,
+                    previous_answer=previous_answer_id,
+                )
+                answer = crud.answer.create(db, obj_in=answer_in)
+                previous_answer_id = answer.id
+    print("Example quiz created")
 
 
 def drop_all(**kw):
