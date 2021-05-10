@@ -14,37 +14,19 @@
 /**
  * 
  * @export
- * @interface Room
+ * @interface QuizSessionUpdate
  */
-export interface Room {
+export interface QuizSessionUpdate {
     /**
      * 
      * @type {string}
-     * @memberof Room
+     * @memberof QuizSessionUpdate
      */
     id: any;
     /**
      * 
-     * @type {string}
-     * @memberof Room
-     */
-    ownerId: any;
-    /**
-     * 
-     * @type {string}
-     * @memberof Room
-     */
-    code: any;
-    /**
-     * 
      * @type {boolean}
-     * @memberof Room
+     * @memberof QuizSessionUpdate
      */
-    isActive: any;
-    /**
-     * 
-     * @type {Array&lt;QuizSession&gt;}
-     * @memberof Room
-     */
-    session: any;
+    isActive?: any;
 }

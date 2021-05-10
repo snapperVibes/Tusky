@@ -35,4 +35,10 @@ export interface AnswerCreate {
      * @memberof AnswerCreate
      */
     questionId: any;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AnswerCreate
+     */
+    isCorrect?: any;
 }

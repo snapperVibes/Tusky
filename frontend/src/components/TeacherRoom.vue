@@ -8,9 +8,10 @@
           @createQuiz="onCreateQuiz"
           @seeQuiz="onSeeQuiz"
           @editQuiz="onEditQuiz"
+          @startQuiz="onStartQuiz"
         />
       </template>
-      <template #fallback> Loading selection mode... </template>
+      <template #fallback> {{ loadingMsg("selection mode") }}</template>
     </Suspense>
     <Suspense v-if="mode === 'quiz-edit'">
       <template #default>
@@ -20,7 +21,24 @@
           @toSelectionMode="onToSelectionMode"
         />
       </template>
-      <template #fallback> Loading quiz editor... </template>
+      <template #fallback> {{ loadingMsg("quiz editor") }} </template>
+    </Suspense>
+    <Suspense v-if="mode === 'quiz-session'">
+      <template #default>
+        <div>
+          <h2>The room is now open for students!</h2>
+          <p>http://localhost:8000/{{ roomInfo.code }}</p>
+          <TeacherQuizSession
+            @toSelectionMode="onToSelectionMode"
+            :room-info="roomInfo"
+            :quiz-id="quizId"
+            :auth-token="authToken"
+          />
+        </div>
+      </template>
+      <template #fallback>
+        {{ loadingMsg("quiz session") }}
+      </template>
     </Suspense>
   </div>
 </template>
@@ -30,6 +48,7 @@ import jwt_decode from "jwt-decode";
 import { quizzesApi } from "@/api";
 import TeacherSelectionMode from "@/components/TeacherSelectionMode";
 import QuizEditor from "@/components/QuizEditor";
+import TeacherQuizSession from "@/components/TeacherQuizSession";
 
 export default {
   name: "TeacherRoom",
@@ -40,6 +59,7 @@ export default {
   components: {
     TeacherSelectionMode,
     QuizEditor,
+    TeacherQuizSession,
   },
   async setup(props) {
     const owner_id = jwt_decode(props.authToken).sub;
@@ -47,6 +67,7 @@ export default {
     return {
       quizzes: quizzes,
       quizInfo: null,
+      quizId: null, // Todo: QuizId should definitely just be quizInfo
     };
   },
   data() {
@@ -55,6 +76,9 @@ export default {
     };
   },
   methods: {
+    loadingMsg: function (msg) {
+      return `Loading ${msg}... if this takes more than a couple seconds, something went wrong.`;
+    },
     onCreateQuiz: function (quizInfo) {
       this.mode = "quiz-edit";
       this.quizInfo = quizInfo;
@@ -65,6 +89,10 @@ export default {
     onEditQuiz: async function (quizInfo) {
       this.mode = "quiz-edit";
       this.quizInfo = quizInfo;
+    },
+    onStartQuiz: async function (quizId) {
+      this.mode = "quiz-session";
+      this.quizId = quizId;
     },
     onToSelectionMode: function () {
       this.mode = "selection";

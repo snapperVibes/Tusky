@@ -15,7 +15,7 @@
             :authToken="authToken"
             :roomInfo="roomInfo"
           />
-          <StudentRoom v-else :authToken="authToken" />
+          <StudentRoom v-else :authToken="authToken" :room-info="roomInfo" />
         </template>
         <template #fallback> Loading </template>
       </Suspense>

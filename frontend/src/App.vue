@@ -20,7 +20,15 @@
   color: #2c3e50;
 }
 
+ol.tusky__answers {
+  list-style-type: lower-alpha;
+}
 .tusky__disabled-explanation {
   color: grey;
+}
+.tusky__edit-box {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
 }
 </style>

@@ -1,4 +1,4 @@
-import {LoginApi, QuizzesApi, RoomsApi, UsersApi} from "@/_generated_code";
+import {LoginApi, QuizzesApi, RoomsApi, UsersApi, SessionsApi} from "@/_generated_code";
 import * as _schema from "@/_generated_code/models"
 
 // TODO: COMPLETE OVERHAUL OF API SYSTEM
@@ -17,7 +17,7 @@ export function authHeaders(token: string) {
   };
 }
 
-export function displayError(err: any) {
+export function displayError(err: any): boolean{
   // Raises an "alert" with the error detailed by the api.
   // Malformed errors just say "Something went wrong".
 
@@ -44,14 +44,16 @@ export function displayError(err: any) {
   if (malformed) {
     // Todo: Set up an API Endpoint to log this happens
     alert("Something went wrong.")
-    return
+    return false
   }
   alert(msg)
+  return false;
 }
 
 export const roomsApi = new RoomsApi()
 export const usersApi = new UsersApi()
 export const loginApi = new LoginApi()
 export const quizzesApi = new QuizzesApi()
+export const sessionsApi = new SessionsApi()
 // Todo: I know this isn't export correctly
 export const schema = _schema

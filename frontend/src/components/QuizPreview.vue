@@ -2,9 +2,13 @@
   <div class="quiz-preview">
     <h4>{{ title }}</h4>
     <span class="quiz-preview--options">
-      <button class="quiz-preview__button see-results" @click.prevent="seeQuiz">
-        See Results
+      <button
+        class="quiz-preview__button start-quiz"
+        @click.prevent="startQuiz"
+      >
+        Start Quiz Session
       </button>
+
       |
       <button class="quiz-preview__button edit-quiz" @click.prevent="editQuiz">
         Edit
@@ -16,6 +20,10 @@
       >
         Delete
       </button>
+      |
+      <button class="quiz-preview__button see-results" @click.prevent="seeQuiz">
+        See Results
+      </button>
     </span>
   </div>
 </template>
@@ -26,7 +34,7 @@ import { authHeaders, displayError, quizzesApi } from "@/api";
 export default {
   name: "QuizPreview",
   props: ["title", "quizId", "authToken"],
-  emits: ["seeQuiz", "editQuiz", "deleteQuiz"],
+  emits: ["seeQuiz", "editQuiz", "deleteQuiz", "startQuiz"],
 
   methods: {
     seeQuiz: function () {
@@ -48,6 +56,9 @@ export default {
     deleteQuiz: function () {
       this.$emit("deleteQuiz", this.quizId);
       // Todo: this view breaks if it's the last quiz
+    },
+    startQuiz: function () {
+      this.$emit("startQuiz", this.quizId);
     },
   },
 };

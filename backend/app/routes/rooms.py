@@ -18,7 +18,8 @@ def create_room(
     current_user: models.User = Depends(deps.get_current_active_user),
 ):
     obj_in.owner_id = current_user.id
-    return crud.room.create(db, obj_in=obj_in)
+    room = crud.room.create(db, obj_in=obj_in)
+    return room
 
 
 @router.get("/get-by-code", response_model=schemas.Room)
@@ -28,7 +29,10 @@ def get_room_by_code(
     current_user: models.User = Depends(deps.get_current_active_user),
     code: str,
 ):
-    return crud.room.get_by_code(db, code=code)
+    room = crud.room.get_by_code(db, code=code)
+    room.session
+    print("\n"*3, room.__dict__)
+    return room
 
 
 @router.put("/update", response_model=schemas.Room)

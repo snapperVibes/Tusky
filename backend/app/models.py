@@ -107,8 +107,13 @@ def AnswerFK(**kw):
     return C(UUID(as_uuid=True), FK("answer.id"), nullable=True, **kw)
 
 
-def ImageFK(**kw):
-    return C(UUID(as_uuid=True), FK("image.id"), nullable=False, **kw)
+
+def QuizSessionFK(**kw):
+    return C(UUID(as_uuid=True), FK("quiz_session.id"), nullable=False)
+
+
+# def ImageFK(**kw):
+#     return C(UUID(as_uuid=True), FK("image.id"), nullable=False, **kw)
 
 
 #######################################################################################
@@ -154,6 +159,7 @@ class Room(Base):
     code = C(TEXT, nullable=False)
     is_active = C(BOOL)
     owner_id = UserFK()
+    session = relationship("QuizSession")
 
 
 class RoomRoleEnum(enum.Enum):
@@ -185,6 +191,12 @@ class Quiz(Base):
 
 
 class Question(Base):
+    # Constraint so two questions cannot both have the same previous question
+    __table_args__ = (
+        ExcludeConstraint(
+            ("previous_question", "="), where=(text("quiz_id = quiz_id"))
+        ),
+    )
     id = ID()
     ts = TS()
     quiz_id = QuizFK()
@@ -210,21 +222,44 @@ class Answer(Base):
         ShortAnswer: Student's write in answers compared to a selection of correct answers
         Essay: Teacher manually grades written responses"""
 
-    # Todo: ExcludeConstraint where only one null previous_answer per question
+    __table_args__ = (
+        ExcludeConstraint(
+            ("previous_answer", "="), where=(text("question_id = question_id"))
+        ),
+    )
     id = ID()
     ts = TS()
     question_id = QuestionFK()
     question = relationship("Question", back_populates="answers", passive_deletes=True)
     previous_answer = AnswerFK()
     text = C(TEXT)
+    is_correct = C(BOOL, nullable=False)
     # image = ImageFK()
 
 
-class Image(Base):
+class QuizSession(Base):
     id = ID()
     ts = TS()
-    uploaded_by_user_id = UserFK()
-    filename = C(TEXT, nullable=False)
-    public_code = C(TEXT, nullable=False)  # Todo: Discuss optimal public facing name
-    data = C(LargeBinary, nullable=False)
-    description = C(TEXT)
+    room_id = RoomFK()
+    quiz_id = QuizFK()
+    is_active = C(BOOL, nullable=False)
+    room = relationship("Room", back_populates="session")
+
+
+class StudentResponse(Base):
+    id = ID()
+    ts = TS()
+    quiz_session_id = QuizSessionFK()
+    student_id = UserFK()
+    question_id = QuestionFK()
+    is_correct = C(BOOL, nullable=False)
+
+
+# class Image(Base):
+#     id = ID()
+#     ts = TS()
+#     uploaded_by_user_id = UserFK()
+#     filename = C(TEXT, nullable=False)
+#     public_code = C(TEXT, nullable=False)  # Todo: Discuss optimal public facing name
+#     data = C(LargeBinary, nullable=False)
+#     description = C(TEXT)

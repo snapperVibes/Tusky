@@ -1,6 +1,7 @@
 <template>
   <div class="editable-element">
     <div
+      title="Double click to edit element"
       class="output"
       ref="outputElement"
       v-show="!editMode"

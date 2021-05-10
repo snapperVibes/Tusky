@@ -35,4 +35,10 @@ export interface AnswerUpdate {
      * @memberof AnswerUpdate
      */
     text?: any;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof AnswerUpdate
+     */
+    isCorrect?: any;
 }

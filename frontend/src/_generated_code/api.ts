@@ -13,5 +13,6 @@
  */export * from './apis/login-api';
 export * from './apis/quizzes-api';
 export * from './apis/rooms-api';
+export * from './apis/sessions-api';
 export * from './apis/users-api';
 

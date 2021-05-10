@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -50,8 +50,26 @@ def get_quiz_preview_by_user(
 
 
 @router.get("/{id}", response_model=schemas.Quiz)
-def get_quiz(*, db: Session = Depends(deps.get_db), id: UUID):
-    # Todo: Confirm quiz is public
+def get_quiz(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    quiz = crud.quiz.get(db, id=id)
+    if current_user.id != quiz.owner_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This endpoint fetches quizzes WITH the answers, "
+                   "which means it is only accessible by the quiz's owner. "
+                   "Were you searching for the endpoint 'for_student'?",
+        )
+    return quiz
+
+
+@router.get("/for_student/{id}", response_model=schemas.QuizForStudent)
+def get_quiz_for_student(*, db: Session = Depends(deps.get_db), id: UUID):
+    # Todo: Only allow other people's quizzes if their quiz is in session
     return crud.quiz.get(db, id=id)
 
 
@@ -151,7 +169,7 @@ def create_answer(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You can only post answers to your own quizzes",
         )
-    return crud.question.create(db, obj_in=obj_in)
+    return crud.answer.create(db, obj_in=obj_in)
 
 
 @router.patch("/answer/update", response_model=schemas.Answer)

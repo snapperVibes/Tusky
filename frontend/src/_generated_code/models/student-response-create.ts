@@ -14,37 +14,31 @@
 /**
  * 
  * @export
- * @interface Room
+ * @interface StudentResponseCreate
  */
-export interface Room {
+export interface StudentResponseCreate {
     /**
      * 
      * @type {string}
-     * @memberof Room
+     * @memberof StudentResponseCreate
      */
-    id: any;
+    quizSessionId: any;
     /**
      * 
      * @type {string}
-     * @memberof Room
+     * @memberof StudentResponseCreate
      */
-    ownerId: any;
+    studentId: any;
     /**
      * 
      * @type {string}
-     * @memberof Room
+     * @memberof StudentResponseCreate
      */
-    code: any;
+    questionId: any;
     /**
      * 
      * @type {boolean}
-     * @memberof Room
+     * @memberof StudentResponseCreate
      */
-    isActive: any;
-    /**
-     * 
-     * @type {Array&lt;QuizSession&gt;}
-     * @memberof Room
-     */
-    session: any;
+    isCorrect: any;
 }

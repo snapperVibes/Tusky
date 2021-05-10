@@ -26,6 +26,7 @@ import { QuestionCreate } from '../models';
 import { QuestionUpdate } from '../models';
 import { Quiz } from '../models';
 import { QuizCreate } from '../models';
+import { QuizForStudent } from '../models';
 import { QuizUpdate } from '../models';
 /**
  * QuizzesApi - axios parameter creator
@@ -349,6 +350,55 @@ export const QuizzesApiAxiosParamCreator = function (configuration?: Configurati
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getQuiz.');
             }
             const localVarPath = `/api/v1/quizzes/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication OAuth2PasswordBearer required
+            // oauth required
+            if (configuration && configuration.accessToken) {
+                const localVarAccessTokenValue = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken("OAuth2PasswordBearer", [])
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + localVarAccessTokenValue;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.query) {
+                query.set(key, options.query[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get Quiz For Student
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getQuizForStudent: async (id: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getQuizForStudent.');
+            }
+            const localVarPath = `/api/v1/quizzes/for_student/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
@@ -684,6 +734,20 @@ export const QuizzesApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get Quiz For Student
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getQuizForStudent(id: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuizForStudent>> {
+            const localVarAxiosArgs = await QuizzesApiAxiosParamCreator(configuration).getQuizForStudent(id, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * 
          * @summary Get Quiz Preview By User
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
@@ -819,6 +883,16 @@ export const QuizzesApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Get Quiz For Student
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getQuizForStudent(id: string, options?: any): AxiosPromise<QuizForStudent> {
+            return QuizzesApiFp(configuration).getQuizForStudent(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Get Quiz Preview By User
          * @param {string} ownerId 
          * @param {*} [options] Override http request option.
@@ -943,6 +1017,17 @@ export class QuizzesApi extends BaseAPI {
      */
     public getQuiz(id: string, options?: any) {
         return QuizzesApiFp(this.configuration).getQuiz(id, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * 
+     * @summary Get Quiz For Student
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof QuizzesApi
+     */
+    public getQuizForStudent(id: string, options?: any) {
+        return QuizzesApiFp(this.configuration).getQuizForStudent(id, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 

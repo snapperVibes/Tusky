@@ -83,4 +83,4 @@ class IntegrityError(TuskyError):
 
 
 class Http403QuizNameConflict(IntegrityError):
-    detail = "Two quizzes by the same owner cannot have the same name.",
+    detail = ("Two quizzes by the same owner cannot have the same name.",)

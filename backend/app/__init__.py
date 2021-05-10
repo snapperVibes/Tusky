@@ -4,19 +4,19 @@ __all__ = [
     "drop_all",
 ]
 
-from typing import NamedTuple, List
-
 from sqlalchemy.exc import InternalError, IntegrityError
 
 from app.core import settings, security
 from app import crud, schemas, main
 from app.exceptions import Http404UserNotFound
 from app.models import Base
+from app.plpy_ import set_event_listeners
 from app.database import engine, SessionLocal
 
 
 def create_all(**kw):
-    # Create the tables
+    # Importing plpy sets listeners
+    set_event_listeners()
     Base.metadata.create_all(engine, **kw)
     db = SessionLocal()
 
@@ -50,18 +50,19 @@ def create_all(**kw):
     with db:
         quiz = crud.quiz.create(db, obj_in=quiz_in)
         previous_question_id = None
-        for q, a in questions_and_answers:
+        for q, answers in questions_and_answers:
             question_in = schemas.QuestionCreate(
                 query=q, quiz_id=quiz.id, previous_question=previous_question_id
             )
             question = crud.question.create(db, obj_in=question_in)
             previous_question_id = question.id
             previous_answer_id = None
-            for a_ in a:
+            for j, a in enumerate(answers):
                 answer_in = schemas.AnswerCreate(
-                    text=a_,
+                    text=a,
                     question_id=previous_question_id,
                     previous_answer=previous_answer_id,
+                    is_correct=True if j == 0 else False,
                 )
                 answer = crud.answer.create(db, obj_in=answer_in)
                 previous_answer_id = answer.id

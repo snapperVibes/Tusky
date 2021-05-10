@@ -41,4 +41,10 @@ export interface Answer {
      * @memberof Answer
      */
     questionId: any;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Answer
+     */
+    isCorrect: any;
 }

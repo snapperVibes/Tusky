@@ -1,8 +1,17 @@
-__all__ = ["user", "quiz", "room"]
+__all__ = [
+    "user",
+    "quiz",
+    "room",
+    "question",
+    "answer",
+    "quiz_session",
+    "student_response",
+]
 
 # Todo: These methods fetch unnecessary information by default
 #  If efficiency becomes an issue,
 #  API Endpoints should get their own custom CRUD methods
+# Todo: Organize PlPython functions. Perhaps they need their own file?
 
 from typing import (
     Any,
@@ -18,7 +27,7 @@ from typing import (
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from sqlalchemy import DDL, event, desc, text, bindparam, String
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import (
@@ -27,7 +36,6 @@ from sqlalchemy.exc import (
     IntegrityError as sqlalchemy_IntegrityError,
 )
 from sqlalchemy.orm import Session
-from sqlalchemy.util import symbol
 
 from app.core import security
 from app.exceptions import (
@@ -36,9 +44,19 @@ from app.exceptions import (
     Http404ActiveRoomNotFound,
     Http404InvalidRequestError,
     Http404QuizNotFound,
-    IntegrityError, Http403QuizNameConflict,
+    IntegrityError,
+    Http403QuizNameConflict,
 )
-from app.models import Base, User, Quiz, Question, Answer, Room
+from app.models import (
+    Base,
+    User,
+    Quiz,
+    Question,
+    Answer,
+    Room,
+    QuizSession,
+    StudentResponse,
+)
 from app.schemas import (
     UserCreate,
     UserUpdate,
@@ -50,6 +68,10 @@ from app.schemas import (
     QuestionUpdate,
     AnswerCreate,
     AnswerUpdate,
+    QuizSessionCreate,
+    QuizSessionUpdate,
+    StudentResponseCreate,
+    StudentResponseUpdate,
 )
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -225,105 +247,22 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         return user.is_superuser
 
 
-# Database functions don't seem Pythonic.
-# I wish I could talk to industry people and learn best practices
-_to_identifier_func = DDL(
-    """\
-CREATE FUNCTION _to_identifier_func() RETURNS TRIGGER AS $$
-    import unicodedata
-    disp_name = TD["new"]["display_name"]
-    id_name = unicodedata.normalize("NFKD", disp_name).lower()
-    TD["new"]["identifier_name"] = id_name
-    if id_name.__contains__("admin"):
-        count_row = plpy.execute("SELECT count(display_name) FROM public.user WHERE display_name='admin';")
-        if count_row[0]['count'] > 0:
-            raise ValueError("Name cannot be admin.")
-        TD["new"]["number"] = 0
-    if id_name.__contains__("#"):
-        raise ValueError("The normalized name cannot contain the hash symbol")
-    if len(id_name) > 32:
-        raise ValueError("The normalized name cannot be longer than 32 characters")
-    return "MODIFY"
-$$ LANGUAGE PLPYTHON3U;"""
-)
-_to_identifier_trigger = DDL(
-    """\
-CREATE TRIGGER _to_identifier_trigger BEFORE INSERT OR UPDATE on public.user
-FOR EACH ROW EXECUTE PROCEDURE _to_identifier_func();"""
-)
-event.listen(
-    User.__table__, "after_create", _to_identifier_func.execute_if(dialect="postgresql")
-)
-event.listen(
-    User.__table__,
-    "after_create",
-    _to_identifier_trigger.execute_if(dialect="postgresql"),
-)
-
-
 class CRUDAnswer(_CRUDBase[Answer, AnswerCreate, AnswerUpdate]):
     def remove(self, db: Session, *, id: UUID) -> int:
         db.execute(
-            text("SELECT delete_single_answer(:id)").bindparams(id=id),
+            text("SELECT _delete_single_answer(:id)").bindparams(id=id),
         )
         db.commit()
         return 1
 
 
-_delete_single_answer = DDL(
-    """\
-CREATE FUNCTION delete_single_answer(answer_id UUID) RETURNS INT AS $$
-    '''
-    Changes the previous answer of the next answer if the current answer is deleted.
-
-    Example Answer table:
-        id | previous_answer
-        ---|---
-        1  | null
-        2  | 1
-        3  | 2
-
-        If answer with id 2 is deleted,
-        this function changes answer 3 so the table looks like this:
-        id | previous_answer
-        ---|---
-        1  | null
-        3  | 1
-    '''
-    # Todo: Optimize
-    select_plan = plpy.prepare(
-        "SELECT previous_answer FROM answer WHERE id = $1", ["UUID"]
-    )
-    rows = plpy.execute(select_plan, [answer_id])
-    if len(rows) > 1:
-        raise plpy.Error(
-        "Tusky failed a sanity check: "
-        "multiple answers pointed towards the same previous_answer.",
-    )
-    previous_id = rows[0]["previous_answer"]
-    update_plan = plpy.prepare(
-        "UPDATE answer SET previous_answer = $1 WHERE previous_answer = $2;",
-        ["UUID", "UUID"]
-    )
-    plpy.execute(
-        update_plan,
-        [previous_id, answer_id]
-    )
-    delete_plan = plpy.prepare("DELETE FROM answer WHERE id = $1", ["UUID"])
-    plpy.execute(
-        delete_plan,
-        [answer_id]
-    )
-    return 1
-$$ LANGUAGE PLPYTHON3U;"""
-)
-event.listen(
-    Answer.__table__, "after_create", _delete_single_answer.execute_if(dialect="postgresql")
-)
-
-
 class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
-    pass
+    def remove(self, db: Session, *, id: UUID) -> int:
+        db.execute(
+            text("SELECT _delete_single_question(:id)").bindparams(id=id),
+        )
+        db.commit()
+        return 1
 
 
 class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
@@ -344,7 +283,7 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
         try:
             quiz = super(CRUDQuiz, self).update(db, db_obj=db_obj, obj_in=obj_in)
         except sqlalchemy_IntegrityError as err:
-            raise Http403QuizNameConflict from  err
+            raise Http403QuizNameConflict from err
         return quiz
 
     def get_previews_by_user(
@@ -381,8 +320,20 @@ class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
             raise Http404InvalidRequestError from err
 
 
+class CRUDQuizSession(_CRUDBase[QuizSession, QuizSessionCreate, QuizSessionUpdate]):
+    pass
+
+
+class CRUDStudentResponse(
+    _CRUDBase[StudentResponse, StudentResponseCreate, StudentResponseUpdate]
+):
+    pass
+
+
 user = CRUDUser(User)
 answer = CRUDAnswer(Answer)
 question = CRUDQuestion(Question)
 quiz = CRUDQuiz(Quiz)
 room = CRUDRoom(Room)
+quiz_session = CRUDQuizSession(QuizSession)
+student_response = CRUDStudentResponse(StudentResponse)

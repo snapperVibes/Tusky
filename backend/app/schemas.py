@@ -1,5 +1,6 @@
 import random
 import string
+from datetime import datetime as DateTime
 from functools import partial
 from typing import Optional, List
 
@@ -9,28 +10,25 @@ from uuid import UUID
 
 def _sort_by_id(_list: List, on: str):
     # Todo: This function isn't optimized.
+    # Modifying the original list seems sketchy, so we create a copy
     copied_list = _list.copy()
     sorted_list = []
-    # Modifying the original list seems sketchy, so we create a copy
 
     def _sort(remaining_list: List, prev_id: Optional[int]):
         for index, value in enumerate(remaining_list):
             if getattr(value, on) == prev_id:
-                sorted_list.append(remaining_list[index])
+                sorted_list.append(remaining_list.pop(index))
                 return _sort(remaining_list, prev_id=value.id)
 
     _sort(copied_list, prev_id=None)
+    assert len(sorted_list) == len(
+        _list
+    ), "Could not sort; Do multiple elements share the same previous element?"
     return sorted_list
 
 
 _sort_questions = partial(_sort_by_id, on="previous_question")
 _sort_answers = partial(_sort_by_id, on="previous_answer")
-
-
-class _LoginRequired:
-    # Todo: Actually make this mixin function.
-    #  At the moment, it just serves
-    pass
 
 
 ########################################################################################
@@ -87,34 +85,30 @@ class UserInDB(_UserInDB):
 
 
 ########################################################################################
-class RoomCreate(BaseModel):
-    owner_id: UUID
-    code: str = Field(
-        default_factory=lambda: "".join(
-            random.choice(string.ascii_uppercase) for _ in range(5)
-        )
-    )
-    is_active: bool = True
+class StudentResponseCreate(BaseModel):
+    quiz_session_id: UUID
+    student_id: UUID
+    question_id: UUID
+    is_correct: bool
 
 
-# Do room events go here?
-class RoomUpdate(BaseModel):
-    id: UUID
-    code: Optional[str]
-    is_active: Optional[bool]
+class StudentResponseUpdate(BaseModel):
+    # Todo: Figure out how to make Not Implemented
+    pass
 
 
-class _RoomInDB(BaseModel):
-    id: UUID
-    owner_id: UUID
-    code: str
-    is_active: bool
+class _StudentResponseInDB(BaseModel):
+    quiz_session_id: UUID
+    student_id: UUID
+    question_id: UUID
+    is_correct: bool
+    ts: DateTime
 
     class Config:
         orm_mode = True
 
 
-class Room(_RoomInDB):
+class StudentResponse(_StudentResponseInDB):
     pass
 
 
@@ -126,11 +120,13 @@ class _AnswerBase(BaseModel):
 class AnswerCreate(_AnswerBase):
     text: str
     question_id: UUID
+    is_correct: bool = False
 
 
 class AnswerUpdate(_AnswerBase):
     id: UUID
     text: Optional[str]
+    is_correct: Optional[bool]
 
 
 class _AnswerInDB(_AnswerBase):
@@ -147,7 +143,7 @@ class AnswerForStudent(_AnswerInDB):
 
 
 class Answer(_AnswerInDB):
-    pass
+    is_correct: bool
 
 
 ########################################################################################
@@ -221,3 +217,66 @@ class QuizForStudent(_QuizInDB):
 
 class Quiz(_QuizInDB):
     questions: List[Question]
+
+
+########################################################################################
+class QuizSessionCreate(BaseModel):
+    room_id: UUID
+    quiz_id: UUID
+    is_active: Optional[bool] = True
+
+
+class QuizSessionUpdate(BaseModel):
+    id: UUID
+    is_active: Optional[bool]
+
+
+class _QuizSessionInDB(BaseModel):
+    id: UUID
+    room_id: UUID
+    quiz_id: UUID
+    is_active: bool
+
+    class Config:
+        orm_mode = True
+
+
+class QuizSession(_QuizSessionInDB):
+    pass
+
+
+class QuizSessionForStudent(_QuizSessionInDB):
+    quiz: Optional[QuizForStudent]
+
+
+########################################################################################
+class RoomCreate(BaseModel):
+    owner_id: UUID
+    code: str = Field(
+        default_factory=lambda: "".join(
+            random.choice(string.ascii_uppercase) for _ in range(5)
+        )
+    )
+    is_active: bool = True
+
+
+# Do room events go here?
+class RoomUpdate(BaseModel):
+    id: UUID
+    code: Optional[str]
+    is_active: Optional[bool]
+
+
+class _RoomInDB(BaseModel):
+    id: UUID
+    owner_id: UUID
+    code: str
+    is_active: bool
+    session_ids: List[Optional[QuizSession]] = Field(..., alias="session")
+
+    class Config:
+        orm_mode = True
+
+
+class Room(_RoomInDB):
+    pass

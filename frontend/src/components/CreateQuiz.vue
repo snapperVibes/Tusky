@@ -65,7 +65,42 @@ export default {
       if (!response) {
         return;
       }
-      this.$emit("createQuiz", response.data);
+      const response2 = await quizzesApi
+        .createQuestion(
+          {
+            query: "Example question",
+            quiz_id: response.data.id,
+            previous_question: null,
+          },
+          authHeader
+        )
+        .catch((err) => {
+          displayError(err);
+          return false;
+        });
+      if (!response2) {
+        return;
+      }
+      const response3 = await quizzesApi
+        .createAnswer(
+          {
+            text: "Example answer",
+            question_id: response2.data.id,
+            previous_answer: null,
+          },
+          authHeader
+        )
+        .catch((err) => {
+          displayError(err);
+          return false;
+        });
+      if (!response2) {
+        return;
+      }
+      const quiz = response.data;
+      quiz.questions.push(response2.data);
+      quiz.questions[0].answers.push(response3.data);
+      this.$emit("createQuiz", quiz);
     },
     _validate_input(quizName) {
       if (!quizName) {

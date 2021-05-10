@@ -12,6 +12,7 @@
             @seeQuiz="onSeeQuiz"
             @editQuiz="onEditQuiz"
             @deleteQuiz="onDeleteQuiz"
+            @startQuiz="onStartQuiz"
           />
         </li>
       </ul>
@@ -41,7 +42,7 @@ export default {
       quizzes: quizzes,
     };
   },
-  emits: ["createQuiz", "seeQuiz", "editQuiz"],
+  emits: ["createQuiz", "seeQuiz", "editQuiz", "startQuiz"],
 
   methods: {
     onCreateQuiz: function (quizInfo) {
@@ -74,6 +75,9 @@ export default {
       this.$forceUpdate();
       alert("Deleted");
       return true;
+    },
+    onStartQuiz: function (quizId) {
+      this.$emit("startQuiz", quizId);
     },
   },
 };
