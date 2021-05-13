@@ -12,7 +12,6 @@
                   v-model:is_correct="answer.is_correct"
                   @change="submitAnswer(answer)"
                 />
-                {{ answer }}
                 <span class="answer"> {{ answer.text }} </span>
               </div>
             </li>
