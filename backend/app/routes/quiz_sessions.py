@@ -1,7 +1,9 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocket
 
 from app import schemas, models, crud
 from . import _depends as deps
@@ -58,3 +60,19 @@ def create_student_response(
             detail="You can only create responses for your own user.",
         )
     return crud.student_response.create(db, obj_in=obj_in)
+
+
+@router.get("/response/get_by_session", response_model=List[schemas.StudentResponse])
+def get_responses_by_session(
+    *,
+    db: Session = Depends(deps.get_db),
+    session_id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    session = crud.quiz_session.get(db, id=session_id)
+    if session.room.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=400, detail="You can only view responses to your own sessions."
+        )
+    return crud.student_response.get_by_session(db, id=session_id)
+

@@ -61,8 +61,8 @@ def get_quiz(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This endpoint fetches quizzes WITH the answers, "
-                   "which means it is only accessible by the quiz's owner. "
-                   "Were you searching for the endpoint 'for_student'?",
+            "which means it is only accessible by the quiz's owner. "
+            "Were you searching for the endpoint 'for_student'?",
         )
     return quiz
 

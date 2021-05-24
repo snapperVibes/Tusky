@@ -1,7 +1,14 @@
 <template>
   <button @click.prevent="endQuiz">END QUIZ</button>
-  <p>This is the teacher quiz session view</p>
-  {{ quizId }}
+  <form @submit.prevent="dummyResponse">
+    <label for="helloThere">
+      <input ref="hello" id="helloThere" type="text" autocomplete="off" />
+    </label>
+    <button>Send</button>
+    <ul v-for="response in responses" :key="response.id">
+      <li>{{ response }}</li>
+    </ul>
+  </form>
 </template>
 
 <script>
@@ -11,7 +18,7 @@ export default {
   name: "TeacherQuizSession",
   props: ["roomInfo", "quizId", "authToken"],
   emits: ["toSelectionMode"],
-  async setup(props) {
+  async setup(props, context) {
     const authHeader = authHeaders(props.authToken);
     const response = await sessionsApi
       .createSession(
@@ -32,6 +39,16 @@ export default {
     return {
       session: session,
       authHeader: authHeader,
+    };
+  },
+  data() {
+    const ws = new WebSocket("ws://localhost:8000/session/get_responses");
+    ws.onmessage = (event) => {
+      this.responses.push(event.data);
+    };
+    return {
+      ws: ws,
+      responses: [],
     };
   },
   methods: {
@@ -55,6 +72,11 @@ export default {
         return;
       }
       this.$emit("toSelectionMode");
+    },
+    dummyResponse: async function (event) {
+      var input = this.$refs.hello;
+      this.ws.send(input.value);
+      input.value = "";
     },
   },
 };

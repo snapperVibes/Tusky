@@ -134,6 +134,58 @@ export const SessionsApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get Responses By Session
+         * @param {string} sessionId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getResponsesBySession: async (sessionId: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'sessionId' is not null or undefined
+            if (sessionId === null || sessionId === undefined) {
+                throw new RequiredError('sessionId','Required parameter sessionId was null or undefined when calling getResponsesBySession.');
+            }
+            const localVarPath = `/api/v1/sessions/response/get_by_session`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication OAuth2PasswordBearer required
+            // oauth required
+            if (configuration && configuration.accessToken) {
+                const localVarAccessTokenValue = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken("OAuth2PasswordBearer", [])
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + localVarAccessTokenValue;
+            }
+
+            if (sessionId !== undefined) {
+                localVarQueryParameter['session_id'] = sessionId;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.query) {
+                query.set(key, options.query[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Update Session
          * @param {QuizSessionUpdate} body 
          * @param {*} [options] Override http request option.
@@ -223,6 +275,20 @@ export const SessionsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get Responses By Session
+         * @param {string} sessionId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getResponsesBySession(sessionId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<StudentResponse>> {
+            const localVarAxiosArgs = await SessionsApiAxiosParamCreator(configuration).getResponsesBySession(sessionId, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * 
          * @summary Update Session
          * @param {QuizSessionUpdate} body 
          * @param {*} [options] Override http request option.
@@ -266,6 +332,16 @@ export const SessionsApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          * 
+         * @summary Get Responses By Session
+         * @param {string} sessionId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getResponsesBySession(sessionId: string, options?: any): AxiosPromise<StudentResponse> {
+            return SessionsApiFp(configuration).getResponsesBySession(sessionId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Update Session
          * @param {QuizSessionUpdate} body 
          * @param {*} [options] Override http request option.
@@ -305,6 +381,17 @@ export class SessionsApi extends BaseAPI {
      */
     public createStudentResponse(body: StudentResponseCreate, options?: any) {
         return SessionsApiFp(this.configuration).createStudentResponse(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * 
+     * @summary Get Responses By Session
+     * @param {string} sessionId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SessionsApi
+     */
+    public getResponsesBySession(sessionId: string, options?: any) {
+        return SessionsApiFp(this.configuration).getResponsesBySession(sessionId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * 

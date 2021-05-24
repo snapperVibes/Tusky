@@ -72,6 +72,7 @@ from app.schemas import (
     QuizSessionUpdate,
     StudentResponseCreate,
     StudentResponseUpdate,
+    QuizPreview,
 )
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -248,21 +249,23 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
 
 
 class CRUDAnswer(_CRUDBase[Answer, AnswerCreate, AnswerUpdate]):
-    def remove(self, db: Session, *, id: UUID) -> int:
-        db.execute(
-            text("SELECT _delete_single_answer(:id)").bindparams(id=id),
-        )
-        db.commit()
-        return 1
+    # def remove(self, db: Session, *, id: UUID) -> int:
+    #     db.execute(
+    #         text("SELECT _delete_single_answer(:id)").bindparams(id=id),
+    #     )
+    #     db.commit()
+    #     return 1
+    pass
 
 
 class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
-    def remove(self, db: Session, *, id: UUID) -> int:
-        db.execute(
-            text("SELECT _delete_single_question(:id)").bindparams(id=id),
-        )
-        db.commit()
-        return 1
+    # def remove(self, db: Session, *, id: UUID) -> int:
+    #     db.execute(
+    #         text("SELECT _delete_single_question(:id)").bindparams(id=id),
+    #     )
+    #     db.commit()
+    #     return 1
+    pass
 
 
 class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
@@ -291,11 +294,11 @@ class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
         db: Session,
         *,
         owner_id: UUID,
-    ) -> Quiz:
+    ) -> QuizPreview:
         # Todo: Pagination
         # Todo: Don't fetch unnecessary information
         try:
-            quiz = db.query(self.model).filter(User.id == owner_id).all()
+            quiz = db.query(Quiz).filter(Quiz.owner_id == owner_id).all()
         except (sqlalchemy_MultipleResultsFound) as err:
             raise Http404InvalidRequestError from err
         if quiz is None:
@@ -327,7 +330,13 @@ class CRUDQuizSession(_CRUDBase[QuizSession, QuizSessionCreate, QuizSessionUpdat
 class CRUDStudentResponse(
     _CRUDBase[StudentResponse, StudentResponseCreate, StudentResponseUpdate]
 ):
-    pass
+    def get_by_session(self, db: Session, *, id: UUID) -> List[StudentResponse]:
+        responses = (
+            db.query(StudentResponse)
+            .filter(StudentResponse.quiz_session_id == id)
+            .all()
+        )
+        return responses
 
 
 user = CRUDUser(User)

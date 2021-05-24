@@ -32,9 +32,6 @@
         type="submit"
         value="Register"
       />
-      <span class="tusky__disabled-explanation" v-show="loggedIn">
-        Log out to log-back-in / register as a different user.
-      </span>
     </fieldset>
   </form>
 </template>

@@ -1,5 +1,6 @@
 <template>
   <div class="teacher-room">
+    <!-- SELECTION MODE -->
     <Suspense v-if="mode === 'selection'">
       <template #default>
         <TeacherSelectionMode
@@ -13,6 +14,7 @@
       </template>
       <template #fallback> {{ loadingMsg("selection mode") }}</template>
     </Suspense>
+    <!-- QUIZ EDIT -->
     <Suspense v-if="mode === 'quiz-edit'">
       <template #default>
         <QuizEditor
@@ -23,11 +25,11 @@
       </template>
       <template #fallback> {{ loadingMsg("quiz editor") }} </template>
     </Suspense>
+    <!-- QUIZ SESSION -->
     <Suspense v-if="mode === 'quiz-session'">
       <template #default>
         <div>
           <h2>The room is now open for students!</h2>
-          <p>http://localhost:8000/{{ roomInfo.code }}</p>
           <TeacherQuizSession
             @toSelectionMode="onToSelectionMode"
             :room-info="roomInfo"

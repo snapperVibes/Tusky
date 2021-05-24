@@ -17,7 +17,6 @@ SQLAlchemy = "1.4.6"
 # Pydantic enforces runtime
 pydantic = {extras = ["email", "dotenv"], version = "^1.8.1"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
-uvicorn = "^0.13.4"
 aiofiles = "^0.6.0"
 python-jose = {extras = ["cryptography"], version = "^3.2.0"}
 psycopg2-binary = "^2.8.6"
@@ -26,6 +25,7 @@ python-multipart = "^0.0.5"
 # This library had major breaking changes between 0.5 and 0.6,
 #  so it feels safer to specify the version explictly.
 click = "^7.1.2"
+uvicorn = {extras = ["standard"], version = "^0.13.4"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"

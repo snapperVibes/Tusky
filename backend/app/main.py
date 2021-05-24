@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core import settings
 from app.routes import router
 
-
 _HERE = path.dirname(path.realpath(__file__))
 
 

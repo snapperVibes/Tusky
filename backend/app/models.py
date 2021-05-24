@@ -1,5 +1,4 @@
 import enum
-from typing import Dict
 
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.sql.expression import text
@@ -105,7 +104,6 @@ def QuestionFK(**kw):
 
 def AnswerFK(**kw):
     return C(UUID(as_uuid=True), FK("answer.id"), nullable=True, **kw)
-
 
 
 def QuizSessionFK(**kw):
@@ -214,13 +212,13 @@ class AnswerIdentifier(enum.Enum):
 
 
 class Answer(Base):
-    """
-    Types of Answers:
-        Radio: Only one answer of type Radio can be correct per question
-        Selection: 0 or more answers of type selection can be selected
-        Order: Draggable answer whose correctness is decided by its position
-        ShortAnswer: Student's write in answers compared to a selection of correct answers
-        Essay: Teacher manually grades written responses"""
+    # """
+    # Types of Answers:
+    #     Radio: Only one answer of type Radio can be correct per question
+    #     Selection: 0 or more answers of type selection can be selected
+    #     Order: Draggable answer whose correctness is decided by its position
+    #     ShortAnswer: Student's write in answers compared to a selection of correct answers
+    #     Essay: Teacher manually grades written responses"""
 
     __table_args__ = (
         ExcludeConstraint(

@@ -31,7 +31,7 @@ def get_room_by_code(
 ):
     room = crud.room.get_by_code(db, code=code)
     room.session
-    print("\n"*3, room.__dict__)
+    print("\n" * 3, room.__dict__)
     return room
 
 

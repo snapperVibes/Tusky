@@ -1,13 +1,6 @@
 <template>
   <div class="quiz-editor">
     <h2>Quiz Editor</h2>
-    <div class="🙁">
-      <h3>Bug alert 🐛!</h3>
-      Only the last plus button and first-and-last trash button of each answer
-      group works (with similar logic on Question actions). The reason for this
-      is known and will be fixed before it is deployed publicly. Polishing bugs
-      out is not crucial to having a working demo.
-    </div>
     <div class="action-buttons">
       <ToSelectionMode @toSelectionMode="onToSelectionMode" />
     </div>
@@ -74,7 +67,6 @@
       </ol>
     </div>
   </div>
-  {{ editableInfo }}
 </template>
 
 <script>
