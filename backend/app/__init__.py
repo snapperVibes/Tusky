@@ -9,13 +9,11 @@ from sqlalchemy.exc import InternalError, IntegrityError
 from app.core import settings, security
 from app import crud, schemas, main
 from app.exceptions import Http404UserNotFound
-from app.models import Base
-from app.plpy_ import set_event_listeners
+from app.models import Base, set_event_listeners
 from app.database import engine, SessionLocal
 
 
 def create_all(**kw):
-    # Importing plpy sets listeners
     set_event_listeners()
     Base.metadata.create_all(engine, **kw)
     db = SessionLocal()

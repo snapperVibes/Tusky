@@ -1,5 +1,6 @@
 import enum
 
+from sqlalchemy import DDL, event
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import relationship
@@ -9,7 +10,7 @@ from sqlalchemy.sql.schema import (
     CheckConstraint,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint, ENUM
+from sqlalchemy.dialects.postgresql import UUID, ExcludeConstraint, ENUM, JSONB
 from sqlalchemy.sql import functions
 from sqlalchemy.sql.sqltypes import (
     INT,
@@ -57,8 +58,6 @@ def does_not_contain(column: str, regex: str):
 #   Namely, a SnowFlake's epoch is only 69 years long, and Twitter has deprecated them
 #   https://github.com/twitter-archive/snowflake/tree/snowflake-2010
 #   It seems that public facing snowflakes are okay as primary keys
-# Todo: The defaults for nullable on Answer (and maybe later Question)
-#   does not match the others
 # Todo: ondelete should be a per-column option
 
 
@@ -93,27 +92,6 @@ def QuizFK(**kw):
     )
 
 
-def QuestionFK(**kw):
-    return C(
-        UUID(as_uuid=True),
-        FK("question.id", ondelete="CASCADE"),
-        nullable=True,
-        **kw,
-    )
-
-
-def AnswerFK(**kw):
-    return C(UUID(as_uuid=True), FK("answer.id"), nullable=True, **kw)
-
-
-def QuizSessionFK(**kw):
-    return C(UUID(as_uuid=True), FK("quiz_session.id"), nullable=False)
-
-
-# def ImageFK(**kw):
-#     return C(UUID(as_uuid=True), FK("image.id"), nullable=False, **kw)
-
-
 #######################################################################################
 class User(Base):
     # Todo: as it stands, one can get someone else's number
@@ -137,7 +115,6 @@ class User(Base):
     is_superuser = C(BOOL, default=False, nullable=False)
     is_active = C(BOOL, default=True)
     quizzes = relationship("Quiz", back_populates="owner")
-    # profile_picture = ImageFK()
 
     @property
     def name_and_number(self):
@@ -160,104 +137,55 @@ class Room(Base):
     session = relationship("QuizSession")
 
 
-class RoomRoleEnum(enum.Enum):
-    OWNER = ...
-    PLEBEIAN = ...
-
-
-class UserRoomRoleLink(Base):
-    __tablename__ = "link__user__room"
-    user_id = UserFK(primary_key=True)
-    room_fk = RoomFK(primary_key=True)
-    role = C(ENUM(RoomRoleEnum), nullable=False, primary_key=True)
-
-
 class Quiz(Base):
     __table_args__ = (UniqueConstraint("title", "owner_id"),)
     id = ID()
     ts = TS()
-    # Todo: Consider changing to title before it's too late not to
-    title = C(
-        VARCHAR(32),
-        CheckConstraint(min_size("name", 1)),
-        nullable=False,
-    )
     owner_id = UserFK()
     owner = relationship("User", back_populates="quizzes")
     is_public = C(BOOL, default=True)
-    questions = relationship("Question", back_populates="quiz", passive_deletes=True)
+    content = C(JSONB)
 
 
-class Question(Base):
-    # Constraint so two questions cannot both have the same previous question
-    __table_args__ = (
-        ExcludeConstraint(
-            ("previous_question", "="), where=(text("quiz_id = quiz_id"))
-        ),
+
+
+
+########################################################################################
+_to_identifier_func = DDL(
+    """\
+CREATE FUNCTION _to_identifier_func() RETURNS TRIGGER AS $$
+    import unicodedata
+    disp_name = TD["new"]["display_name"]
+    id_name = unicodedata.normalize("NFKD", disp_name).lower()
+    TD["new"]["identifier_name"] = id_name
+    if id_name.__contains__("admin"):
+        count_row = plpy.execute("SELECT count(display_name) FROM public.user WHERE display_name='admin';")
+        if count_row[0]['count'] > 0:
+            raise ValueError("Name cannot be admin.")
+        TD["new"]["number"] = 0
+    if id_name.__contains__("#"):
+        raise ValueError("The normalized name cannot contain the hash symbol")
+    if len(id_name) > 32:
+        raise ValueError("The normalized name cannot be longer than 32 characters")
+    return "MODIFY"
+$$ LANGUAGE PLPYTHON3U;"""
+)
+_to_identifier_trigger = DDL(
+    """\
+CREATE TRIGGER _to_identifier_trigger BEFORE INSERT OR UPDATE on public.user
+FOR EACH ROW EXECUTE PROCEDURE _to_identifier_func();"""
+)
+
+
+def set_event_listeners():
+    event.listen(
+        User.__table__,
+        "after_create",
+        _to_identifier_func.execute_if(dialect="postgresql"),
     )
-    id = ID()
-    ts = TS()
-    quiz_id = QuizFK()
-    quiz = relationship("Quiz", back_populates="questions")
-    query = C(TEXT)
-    previous_question = QuestionFK()
-    answers = relationship("Answer", back_populates="question")
 
-
-class AnswerIdentifier(enum.Enum):
-    # It doesn't feel worth the effort to allow custom answer identifiers
-    #   As such, this is currently unused
-    LETTER = "letter"
-    NUMERIC = "numeric"
-
-
-class Answer(Base):
-    # """
-    # Types of Answers:
-    #     Radio: Only one answer of type Radio can be correct per question
-    #     Selection: 0 or more answers of type selection can be selected
-    #     Order: Draggable answer whose correctness is decided by its position
-    #     ShortAnswer: Student's write in answers compared to a selection of correct answers
-    #     Essay: Teacher manually grades written responses"""
-
-    __table_args__ = (
-        ExcludeConstraint(
-            ("previous_answer", "="), where=(text("question_id = question_id"))
-        ),
+    event.listen(
+        User.__table__,
+        "after_create",
+        _to_identifier_trigger.execute_if(dialect="postgresql"),
     )
-    id = ID()
-    ts = TS()
-    question_id = QuestionFK()
-    question = relationship("Question", back_populates="answers", passive_deletes=True)
-    previous_answer = AnswerFK()
-    text = C(TEXT)
-    is_correct = C(BOOL, nullable=False)
-    # image = ImageFK()
-
-
-class QuizSession(Base):
-    id = ID()
-    ts = TS()
-    room_id = RoomFK()
-    quiz_id = QuizFK()
-    is_active = C(BOOL, nullable=False)
-    room = relationship("Room", back_populates="session")
-
-
-class StudentResponse(Base):
-    id = ID()
-    ts = TS()
-    quiz_session_id = QuizSessionFK()
-    student_id = UserFK()
-    question_id = QuestionFK()
-    is_correct = C(BOOL, nullable=False)
-
-
-# class Image(Base):
-#     id = ID()
-#     ts = TS()
-#     uploaded_by_user_id = UserFK()
-#     filename = C(TEXT, nullable=False)
-#     public_code = C(TEXT, nullable=False)  # Todo: Discuss optimal public facing name
-#     data = C(LargeBinary, nullable=False)
-#     description = C(TEXT)

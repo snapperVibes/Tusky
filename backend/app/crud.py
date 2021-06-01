@@ -1,17 +1,12 @@
 __all__ = [
     "user",
-    "quiz",
     "room",
-    "question",
-    "answer",
-    "quiz_session",
-    "student_response",
+    "quiz"
 ]
 
 # Todo: These methods fetch unnecessary information by default
 #  If efficiency becomes an issue,
 #  API Endpoints should get their own custom CRUD methods
-# Todo: Organize PlPython functions. Perhaps they need their own file?
 
 from typing import (
     Any,
@@ -26,6 +21,7 @@ from typing import (
 )
 
 from fastapi.encoders import jsonable_encoder
+import jsonpatch
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
@@ -51,28 +47,13 @@ from app.models import (
     Base,
     User,
     Quiz,
-    Question,
-    Answer,
     Room,
-    QuizSession,
-    StudentResponse,
 )
 from app.schemas import (
     UserCreate,
     UserUpdate,
-    QuizCreate,
-    QuizUpdate,
     RoomCreate,
-    RoomUpdate,
-    QuestionCreate,
-    QuestionUpdate,
-    AnswerCreate,
-    AnswerUpdate,
-    QuizSessionCreate,
-    QuizSessionUpdate,
-    StudentResponseCreate,
-    StudentResponseUpdate,
-    QuizPreview,
+    RoomUpdate, QuizUpdate, QuizCreate,
 )
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -248,64 +229,6 @@ class CRUDUser(_CRUDBase[User, UserCreate, UserUpdate]):
         return user.is_superuser
 
 
-class CRUDAnswer(_CRUDBase[Answer, AnswerCreate, AnswerUpdate]):
-    # def remove(self, db: Session, *, id: UUID) -> int:
-    #     db.execute(
-    #         text("SELECT _delete_single_answer(:id)").bindparams(id=id),
-    #     )
-    #     db.commit()
-    #     return 1
-    pass
-
-
-class CRUDQuestion(_CRUDBase[Question, QuestionCreate, QuestionUpdate]):
-    # def remove(self, db: Session, *, id: UUID) -> int:
-    #     db.execute(
-    #         text("SELECT _delete_single_question(:id)").bindparams(id=id),
-    #     )
-    #     db.commit()
-    #     return 1
-    pass
-
-
-class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
-    def create(self, db: Session, *, obj_in: QuizCreate) -> Quiz:
-        try:
-            quiz = super(CRUDQuiz, self).create(db, obj_in=obj_in)
-        except sqlalchemy_IntegrityError as err:
-            raise Http403QuizNameConflict from err
-        return quiz
-
-    def update(
-        self,
-        db: Session,
-        *,
-        db_obj: Quiz,
-        obj_in: Union[QuizUpdate, Dict[str, Any]],
-    ) -> Quiz:
-        try:
-            quiz = super(CRUDQuiz, self).update(db, db_obj=db_obj, obj_in=obj_in)
-        except sqlalchemy_IntegrityError as err:
-            raise Http403QuizNameConflict from err
-        return quiz
-
-    def get_previews_by_user(
-        self,
-        db: Session,
-        *,
-        owner_id: UUID,
-    ) -> QuizPreview:
-        # Todo: Pagination
-        # Todo: Don't fetch unnecessary information
-        try:
-            quiz = db.query(Quiz).filter(Quiz.owner_id == owner_id).all()
-        except (sqlalchemy_MultipleResultsFound) as err:
-            raise Http404InvalidRequestError from err
-        if quiz is None:
-            raise Http404QuizNotFound
-        return quiz
-
-
 class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
     def get_by_code(self, db: Session, *, code: str) -> Room:
         """ Raises: sqlalchemy_NoResultFound, sqlalchemy_MultipleResultsFound"""
@@ -323,26 +246,25 @@ class CRUDRoom(_CRUDBase[Room, RoomCreate, RoomUpdate]):
             raise Http404InvalidRequestError from err
 
 
-class CRUDQuizSession(_CRUDBase[QuizSession, QuizSessionCreate, QuizSessionUpdate]):
-    pass
-
-
-class CRUDStudentResponse(
-    _CRUDBase[StudentResponse, StudentResponseCreate, StudentResponseUpdate]
-):
-    def get_by_session(self, db: Session, *, id: UUID) -> List[StudentResponse]:
-        responses = (
-            db.query(StudentResponse)
-            .filter(StudentResponse.quiz_session_id == id)
-            .all()
-        )
-        return responses
+class CRUDQuiz(_CRUDBase[Quiz, QuizCreate, QuizUpdate]):
+    def update(
+        self,
+        db: Session,
+        *,
+        db_obj: Quiz,
+        obj_in: Union[QuizUpdate, Dict[str, Any]],
+    ) -> ModelType:
+        if obj_in.set_is_public:
+            db_obj.is_public = obj_in.set_is_public
+        if obj_in.patch_content:
+            jsonpatch.apply_patch(
+                doc=db_obj.content, patch=obj_in.patch_content, in_place=True
+            )
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
 
 user = CRUDUser(User)
-answer = CRUDAnswer(Answer)
-question = CRUDQuestion(Question)
-quiz = CRUDQuiz(Quiz)
 room = CRUDRoom(Room)
-quiz_session = CRUDQuizSession(QuizSession)
-student_response = CRUDStudentResponse(StudentResponse)
+quiz = CRUDQuiz(Quiz)

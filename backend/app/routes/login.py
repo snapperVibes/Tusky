@@ -5,21 +5,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app import schemas, models, crud, settings, security
+from app import schemas, crud, settings, security
 from . import _depends as deps
 from ..exceptions import Http400InactiveUser
 
 router = APIRouter(
+    prefix="/login",
     tags=["login"],
 )
 
 
-@router.get("/", include_in_schema=False)
-def home():
-    return {"msg": "Welcome to Tusky's API 🐘."}
-
-
-@router.post("/login/access-token", response_model=schemas.Token)
+@router.post("access", response_model=schemas.Token)
 def login_access_token(
     db: Session = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends(OAuth2PasswordRequestForm),

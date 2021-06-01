@@ -9,11 +9,10 @@ description = ""
 authors = ["Snapper <learningwithsnapper@gmail.com>"]
 
 [tool.poetry.dependencies]
-# Tusky uses the assignment operator `:=`, which means the minimum Python version is 3.8
-python = "^3.8"
+python = "^3.9"
 fastapi = "^0.63.0"
 # SQLAlchemy 1.4 is a transition release before features are deprecated in 2.0
-SQLAlchemy = "1.4.6"
+SQLAlchemy = "1.4.17"
 # Pydantic enforces runtime
 pydantic = {extras = ["email", "dotenv"], version = "^1.8.1"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
@@ -22,10 +21,9 @@ python-jose = {extras = ["cryptography"], version = "^3.2.0"}
 psycopg2-binary = "^2.8.6"
 # OAuth2 uses "form data" which is handled by python-multipart
 python-multipart = "^0.0.5"
-# This library had major breaking changes between 0.5 and 0.6,
-#  so it feels safer to specify the version explictly.
 click = "^7.1.2"
 uvicorn = {extras = ["standard"], version = "^0.13.4"}
+jsonpatch = "^1.32"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
