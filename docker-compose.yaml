@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  backend:
+    build:
+      context: .
+      args:
+        INSTALL_DEV: ${INSTALL_DEV-false}
+    ports:
+    - "8000:80"

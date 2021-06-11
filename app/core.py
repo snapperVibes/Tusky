@@ -2,6 +2,7 @@ __all__ = ["settings", "security"]
 
 import secrets
 import warnings
+from typing import Optional, Dict, Any
 
 from pydantic import BaseSettings, validator, PostgresDsn
 
@@ -13,13 +14,13 @@ with warnings.catch_warnings():
 
 
 class Settings(BaseSettings):
-    API_STR_V1 = "/api/v1/"
+    API_STR_V1 = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
 
-    POSTGRES_SERVER: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_USER: str = "thalia"
+    POSTGRES_PASSWORD: str = "changethis"
+    POSTGRES_DB: str = "tusky"
     SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)

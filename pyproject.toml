@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "tusky"
+version = "0.1.0"
+description = ""
+authors = ["Snapper Vibes <learningwithsnapper@gmail.com>"]
+license = "GNU General Public License v3.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fastapi = "^0.65.2"
+SQLAlchemy = "^1.4.17"
+pydantic = {extras = ["email", "dotenv"], version = "^1.8.2"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+aiofiles = "^0.6.0"
+python-jose = {extras = ["cryptography"], version = "^3.2.0"}
+psycopg2-binary = "^2.8.6"
+# OAuth2 uses "form data" which is handled by python-multipart
+python-multipart = "^0.0.5"
+uvicorn = {extras = ["standard"], version = "^0.13.4"}
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+tenacity = "^7.0.0"
+requests = "^2.25.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
