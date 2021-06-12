@@ -1,3 +1,0 @@
-[submodule "tusky-protobufs"]
-	path = tusky-protobufs
-	url = https://github.com/snapperVibes/tusky-protobufs

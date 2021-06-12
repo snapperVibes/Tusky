@@ -1,5 +1,4 @@
 # Tusky
-###### Real-time web quiz application
-(Work in progress; Tusky certainly isn't ready to scale to 10,000 users)
+###### Real-time web quiz application (work in progress)
 
-This is Tusky's RPC server, implemented in Python.
+This is Tusky's mono-repo. Tusky services are stored in their respective folders.
