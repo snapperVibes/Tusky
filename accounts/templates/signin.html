@@ -1,9 +1,0 @@
-{% extends "_base.html" %}
-{% block content %}
-<h1>Hello</h1>
-<!--  Todo: Make action url dynamic-->
-<form method="post" action="/signin/v1/challenge/pwd">
-  <input type="text" id="identifier" autocomplete="username" spellcheck="false" tabindex="0" placeholder="Email or username" name="identifier" value="" required minlength="2">
-  <button>Next</button>
-</form>
-{% endblock %}
