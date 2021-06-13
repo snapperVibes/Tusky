@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "tusky-oauth"
+version = "0.1.0"
+description = "Tusky's OAuth Server"
+authors = ["Snapper <LearningWithSnapper@gmail.com>"]
+license = "The GNU General Public License v3.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Django = "^3.2.4"
+django-oauth-toolkit = "^1.5.0"
+django-cors-middleware = "^1.5.0"
+
+[tool.poetry.dev-dependencies]
+black = "^21.6b0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
