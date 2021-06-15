@@ -153,5 +153,8 @@ Thumbs.db
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
+# IDE Specific files
 .idea
+# Scratchpad
 workspace.py
+*.key
