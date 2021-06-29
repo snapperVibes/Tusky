@@ -1,3 +1,5 @@
+__all__ = ["Snowflake", "get_snowflake"]
+
 import datetime
 
 import httpx
@@ -18,8 +20,8 @@ class Snowflake(int):
         return datetime.datetime.fromtimestamp(seconds_since_tusky_epoch + self._TUSKY_EPOCH)
 
 
-async def get_snowflake() -> Snowflake:
+async def get_snowflake(uri: str = "http://host.docker.internal:8080") -> Snowflake:
     async with httpx.AsyncClient() as client:
-        r = await client.get("http://host.docker.internal:8080")
+        r = await client.get(uri)
     r.raise_for_status()
     return Snowflake(r.json()["id"])

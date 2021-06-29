@@ -1,3 +1,0 @@
-[submodule "snowflake"]
-	path = snowflake
-	url = https://github.com/twitter-archive/snowflake.git

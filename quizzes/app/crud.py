@@ -22,10 +22,15 @@ class _CRUDBase(Generic[ModelType, CreateSchemaType, PatchSchemaType]):
         obj_in_data = jsonable_encoder(obj_in)
         db_obj = self.model(**obj_in_data)
         # TODO: THE TIMING IS CONSISTENTLY OFF
-        db_obj.id = await get_snowflake()
+        snowflake = await get_snowflake()
+        print("Id")
+        db_obj.id = snowflake
+        print("After defining id: ", db_obj.id)
         db.add(db_obj)
+        print("After adding to db: ", db_obj.id)
         db.commit()
         db.refresh(db_obj)
+        print("After refreshing: ", db_obj.id)
         return db_obj
 
     def get(self, db: Session, *, id: Snowflake) -> Optional[ModelType]:
