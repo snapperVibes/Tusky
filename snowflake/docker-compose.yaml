@@ -1,0 +1,14 @@
+services:
+  goldflake:
+    build:
+      context: "."
+      dockerfile: "Dockerfile"
+    ports:
+      - "8080:8080"
+    networks:
+      - "tuskynet"
+
+networks:
+  tuskynet:
+    driver: "bridge"
+

@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "users"
+version = "0.1.0"
+description = ""
+authors = ["Snapper <LearningWithSnapper@gmail.com>"]
+license = "GNU General Public License v3"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fastapi = "^0.65.2"
+uvicorn = {extras = ["standard"], version = "^0.13.4"}
+fastapi-users = {extras = ["sqlalchemy"], version = "^6.1.0"}
+databases = {extras = ["postgresql", "sqlite"], version = "^0.4.3"}
+fastapi-operation-id = "^0.1.0"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+requests = "^2.25.1"
+google-cloud = "^0.34.0"
+protobuf = "^3.17.3"
+google-api-core = "^1.30.0"
+grpcio = "^1.38.1"
+grpcio-tools = "^1.38.1"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

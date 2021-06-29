@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "quizzes"
+version = "0.1.0"
+description = "Service exposing Tusky's quiz API"
+authors = ["Snapper <LearningWithSnapper@gmail.com>"]
+license = "GNU General Public License v3"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fastapi = "^0.65.2"
+fastapi-operation-id = "^0.1.0"
+uvicorn = "^0.14.0"
+pydantic = {extras = ["dotenv"], version = "^1.8.2"}
+SQLAlchemy = "^1.4.19"
+jsonpatch = "^1.32"
+httpx = "0.18.*"
+sqlalchemy-json = "^0.4.0"
+psycopg2 = "^2.9.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

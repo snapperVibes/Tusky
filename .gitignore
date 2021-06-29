@@ -104,6 +104,7 @@ dmypy.json
 .idea
 
 # Project specific stuff
+*.idea
 workspace*
 *.prod
 .env
